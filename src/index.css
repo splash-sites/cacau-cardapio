@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #F0ECD2;
+  --color-foreground: #030404;
+
+  --color-primary: #CF9047;
+  --color-primary-foreground: #030404;
+
+  --color-secondary: #7B431B;
+  --color-secondary-foreground: #F0ECD2;
+
+  --color-accent: #2C120B;
+  --color-accent-foreground: #F0ECD2;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Inter", sans-serif;
+}
