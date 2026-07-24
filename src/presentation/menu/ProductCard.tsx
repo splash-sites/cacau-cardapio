@@ -1,65 +1,49 @@
+import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import type { Product } from '../../domain/menu/Product'
-import { useCart } from '../cart/useCart'
 import { formatPrice } from './formatPrice'
+import { mockLoverPrice } from './mockLoverPricing'
+import { ProductDetailModal } from './ProductDetailModal'
 
 export function ProductCard({ product }: { product: Product }) {
-  const quantity = useCart((state) => state.items.find((item) => item.product.id === product.id)?.quantity ?? 0)
-  const addItem = useCart((state) => state.addItem)
-  const incrementItem = useCart((state) => state.incrementItem)
-  const decrementItem = useCart((state) => state.decrementItem)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   return (
-    <li className="flex gap-3 rounded-2xl bg-white p-3 shadow-sm">
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-secondary/10">
+    <li className="flex items-center gap-4 rounded-2xl bg-white p-3 shadow-sm">
+      <div className="h-[78px] w-[78px] shrink-0 overflow-hidden rounded-xl bg-secondary/10">
         {product.imageUrl && (
           <img
             src={product.imageUrl}
             alt=""
             loading="lazy"
-            width={64}
-            height={64}
+            width={78}
+            height={78}
             className="h-full w-full object-cover"
           />
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-0.5">
-        <p className="font-body font-medium text-foreground">{product.name}</p>
-        {product.description && (
-          <p className="font-body text-sm text-foreground/70">{product.description}</p>
-        )}
-        <div className="mt-1 flex items-center justify-between">
-          <p className="font-body font-medium text-secondary">{formatPrice(product.price)}</p>
-          {quantity === 0 ? (
-            <button
-              type="button"
-              onClick={() => addItem(product)}
-              className="flex h-11 min-h-11 items-center rounded-md bg-primary px-4 font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-            >
-              Adicionar
-            </button>
-          ) : (
-            <div className="flex h-11 items-center gap-3 rounded-md bg-primary/10">
-              <button
-                type="button"
-                onClick={() => decrementItem(product.id)}
-                aria-label={`Remover um ${product.name}`}
-                className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-              >
-                −
-              </button>
-              <span className="min-w-4 text-center font-body font-medium text-foreground">{quantity}</span>
-              <button
-                type="button"
-                onClick={() => incrementItem(product.id)}
-                aria-label={`Adicionar mais um ${product.name}`}
-                className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-              >
-                +
-              </button>
-            </div>
-          )}
+
+      <div className="flex flex-1 flex-col gap-1">
+        <p className="font-body text-lg font-bold text-foreground">{product.name}</p>
+        <span className="inline-flex w-fit items-center rounded-full border border-primary px-2 py-0.5 font-body text-[11px] font-medium text-secondary">
+          Cacau Lovers*
+        </span>
+        <div className="mt-0.5 flex items-baseline gap-2">
+          <span className="font-body text-[19px] font-bold text-primary">{formatPrice(mockLoverPrice(product.price))}</span>
+          <span className="font-body text-sm text-foreground/50">{formatPrice(product.price)}</span>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setDetailOpen(true)}
+        aria-label={`Ver detalhes de ${product.name}`}
+        className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center self-start rounded-full bg-primary text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        <Plus size={20} aria-hidden="true" />
+      </button>
+
+      {detailOpen && <ProductDetailModal product={product} onClose={() => setDetailOpen(false)} />}
     </li>
   )
 }

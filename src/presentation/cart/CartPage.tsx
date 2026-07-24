@@ -1,8 +1,9 @@
 import { Navigate, useNavigate } from 'react-router-dom'
+import { ArrowLeft, X } from 'lucide-react'
 import { cartTotal } from '../../domain/cart/Cart'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useOrderType } from '../order/useOrderType'
-import { useCurrentStore } from '../store/StoreContext'
+import { useCurrentStore } from '../store/useCurrentStore'
 import { useCustomer } from '../customer/useCustomer'
 import { formatPrice } from '../menu/formatPrice'
 import { PageShell } from '../shared/PageShell'
@@ -32,9 +33,9 @@ export function CartPage() {
           type="button"
           onClick={() => navigate(`/${store.slug}/cardapio`)}
           aria-label="Voltar pro cardápio"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center font-display text-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         >
-          ←
+          <ArrowLeft size={20} aria-hidden="true" />
         </button>
         <h1 className="font-display text-xl">Seu pedido</h1>
       </div>
@@ -62,9 +63,7 @@ export function CartPage() {
                     aria-label={`Remover ${product.name} do carrinho`}
                     className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center text-foreground/40 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                   >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                      <path d="M18 6 6 18M6 6l12 12" />
-                    </svg>
+                    <X size={16} aria-hidden="true" />
                   </button>
                   <div className="flex gap-3 pr-8">
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-secondary/10">

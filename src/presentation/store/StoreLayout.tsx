@@ -1,5 +1,5 @@
 import { Outlet, useParams } from 'react-router-dom'
-import { StoreProvider } from './StoreContext'
+import { StoreContext } from './StoreContext'
 import { useStore } from './useStore'
 
 export function StoreLayout() {
@@ -24,8 +24,8 @@ export function StoreLayout() {
   }
 
   return (
-    <StoreProvider value={store}>
+    <StoreContext.Provider value={store}>
       <Outlet />
-    </StoreProvider>
+    </StoreContext.Provider>
   )
 }

@@ -1,9 +1,6 @@
-import { createContext, useContext } from 'react'
+import { useContext } from 'react'
 import type { Store } from '../../domain/store/Store'
-
-const StoreContext = createContext<Store | null>(null)
-
-export const StoreProvider = StoreContext.Provider
+import { StoreContext } from './StoreContext'
 
 export function useCurrentStore(): Store {
   const store = useContext(StoreContext)

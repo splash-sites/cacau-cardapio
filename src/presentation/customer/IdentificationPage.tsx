@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { identificationSchema, type IdentificationInput } from '../../application/customer/schemas'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
-import { useCurrentStore } from '../store/StoreContext'
+import { useCurrentStore } from '../store/useCurrentStore'
 import { PageShell } from '../shared/PageShell'
 import { useCustomer } from './useCustomer'
 
@@ -57,9 +58,9 @@ export function IdentificationPage() {
           type="button"
           onClick={() => navigate(`/${store.slug}/carrinho`)}
           aria-label="Voltar pro carrinho"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center font-display text-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         >
-          ←
+          <ArrowLeft size={20} aria-hidden="true" />
         </button>
         <h1 className="font-display text-xl">Seus dados</h1>
       </div>

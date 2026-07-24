@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
+import { Check, X } from 'lucide-react'
 import { currentStepIndex, orderStatusSteps } from '../../domain/order/orderStatusSteps'
 import type { OrderType } from '../../domain/order/OrderType'
 import { useCart } from '../cart/useCart'
-import { useCurrentStore } from '../store/StoreContext'
+import { useCurrentStore } from '../store/useCurrentStore'
 import { PageShell } from '../shared/PageShell'
 import { useOrderStatus } from './useOrderStatus'
 import { useOrderType } from './useOrderType'
@@ -38,9 +39,7 @@ export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf
       {status === 'cancelled' ? (
         <>
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-red-600" aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <X size={32} strokeWidth={2.5} className="text-red-600" aria-hidden="true" />
           </div>
           <h1 className="font-display text-2xl text-accent">Pedido cancelado</h1>
           <p className="font-body text-foreground/60">Fale com a loja se tiver dúvidas.</p>
@@ -48,9 +47,7 @@ export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf
       ) : (
         <>
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-background" aria-hidden="true">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
+            <Check size={32} strokeWidth={3} className="text-background" aria-hidden="true" />
           </div>
           <div>
             <h1 className="font-display text-2xl text-accent">Pedido enviado!</h1>

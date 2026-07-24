@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { confirmOrder } from '../../application/order/confirmOrder'
 import { cartTotal } from '../../domain/cart/Cart'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
@@ -7,7 +8,7 @@ import { useCart } from '../cart/useCart'
 import { useCustomer } from '../customer/useCustomer'
 import { formatPrice } from '../menu/formatPrice'
 import { supabaseOrderRepository } from '../../infrastructure/order/SupabaseOrderRepository'
-import { useCurrentStore } from '../store/StoreContext'
+import { useCurrentStore } from '../store/useCurrentStore'
 import { PageShell } from '../shared/PageShell'
 import { OrderTrackingView } from './OrderTrackingView'
 import { useOrderType } from './useOrderType'
@@ -62,9 +63,9 @@ export function ReviewPage() {
           type="button"
           onClick={() => navigate(`/${store.slug}/identificacao`)}
           aria-label="Voltar"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center font-display text-3xl text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         >
-          ←
+          <ArrowLeft size={24} aria-hidden="true" />
         </button>
         <h1 className="font-display text-2xl text-accent">Revisar pedido</h1>
       </div>

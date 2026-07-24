@@ -1,8 +1,9 @@
 import { Navigate, useNavigate } from 'react-router-dom'
+import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { cartItemCount, cartTotal } from '../../domain/cart/Cart'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
-import { useCurrentStore } from '../store/StoreContext'
+import { useCurrentStore } from '../store/useCurrentStore'
 import { FixedBottomBar } from '../shared/FixedBottomBar'
 import { PageShell } from '../shared/PageShell'
 import { ProductCard } from './ProductCard'
@@ -29,9 +30,9 @@ export function MenuPage() {
             type="button"
             onClick={() => navigate(`/${store.slug}`)}
             aria-label="Voltar"
-            className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center font-display text-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
           >
-            ←
+            <ArrowLeft size={20} aria-hidden="true" />
           </button>
           <div>
             <h1 className="font-display text-2xl">{store.name}</h1>
@@ -44,10 +45,7 @@ export function MenuPage() {
           aria-label="Meus pedidos"
           className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center rounded-full bg-background/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M6 7h12l1 13H5L6 7Z" />
-            <path d="M9 7V6a3 3 0 0 1 6 0v1" />
-          </svg>
+          <ShoppingBag size={20} aria-hidden="true" />
         </button>
       </div>
 
