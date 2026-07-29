@@ -2,6 +2,11 @@ export function normalizeCpf(raw: string): string {
   return raw.replace(/\D/g, '')
 }
 
+export function formatCpf(raw: string): string {
+  const cpf = normalizeCpf(raw)
+  return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+}
+
 function checkDigit(base: string, factorStart: number): number {
   let sum = 0
   for (let i = 0; i < base.length; i++) {

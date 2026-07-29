@@ -11,6 +11,7 @@ interface PublicStoreRow {
   supports_pickup: boolean
   supports_delivery: boolean
   reseller_enabled: boolean
+  whatsapp_number: string | null
 }
 
 function toStore(row: PublicStoreRow): Store {
@@ -23,6 +24,7 @@ function toStore(row: PublicStoreRow): Store {
     supportsPickup: row.supports_pickup,
     supportsDelivery: row.supports_delivery,
     resellerEnabled: row.reseller_enabled,
+    whatsappNumber: row.whatsapp_number,
   }
 }
 
@@ -30,7 +32,9 @@ export class SupabaseStoreRepository implements StoreRepository {
   async getStoreBySlug(slug: string): Promise<Store | null> {
     const { data, error } = await supabase
       .from('public_stores')
-      .select('id, name, slug, active, supports_dine_in, supports_pickup, supports_delivery, reseller_enabled')
+      .select(
+        'id, name, slug, active, supports_dine_in, supports_pickup, supports_delivery, reseller_enabled, whatsapp_number',
+      )
       .eq('slug', slug)
       .eq('active', true)
       .maybeSingle()

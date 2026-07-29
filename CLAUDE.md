@@ -185,7 +185,7 @@ Regras não-negociáveis, independente de feature:
 - **RLS obrigatório em toda tabela.** Cliente só enxerga produtos e pedidos da própria loja.
 - Nunca confie em filtro feito só no frontend — a segurança real é a política de RLS definida no projeto Supabase compartilhado.
 - **Cliente final não tem conta/sessão** (ver "Identificação do cliente (sem conta)" abaixo) — então o RLS aqui só isola por `store_id`, não por cliente. "Meus pedidos" filtra por `customer_cpf` no client, sem garantia server-side de que quem digitou o CPF é o dono dele (risco aceito, ver seção Segurança).
-- **Resolvido**: existe `public_stores` (view sobre `stores`, mesmo padrão de `public_products` — `id, name, slug, active, supports_dine_in, supports_pickup, supports_delivery, reseller_enabled`), liberada pro `anon` via `grant select`. `/:storeSlug` resolve a loja através dela (`infrastructure/store/SupabaseStoreRepository.ts`). Tela de tipo de pedido já filtra pelas opções que `supports_*` marca como suportadas.
+- **Resolvido**: existe `public_stores` (view sobre `stores`, mesmo padrão de `public_products` — `id, name, slug, active, supports_dine_in, supports_pickup, supports_delivery, reseller_enabled, whatsapp_number`), liberada pro `anon` via `grant select`. `/:storeSlug` resolve a loja através dela (`infrastructure/store/SupabaseStoreRepository.ts`). Tela de tipo de pedido já filtra pelas opções que `supports_*` marca como suportadas. `whatsapp_number` alimenta o link de WhatsApp pós-confirmação (ver "Confirmação de pedido").
 - **Cuidado real, já vivido**: o cardápio antes não filtrava por loja — com 2 lojas cadastradas no banco compartilhado, produto de uma loja apareceu misturado no carrinho de pedido pensado pra outra, e a confirmação falhou (RPC recusou corretamente, produto não pertencia à loja do pedido). Todo fluxo (cardápio, carrinho, confirmação) é escopado pela loja resolvida via `/:storeSlug` agora — não existe mais busca de produto "global" sem `store_id`.
 
 ## Modelo de dados (no projeto Supabase compartilhado)
@@ -194,10 +194,26 @@ profiles      (id, role: super_admin|store_admin, store_id nullable, full_name)
                -- só lojista/admin (gerenciado pelo repositório `admin`); cliente final não tem linha aqui
 stores        (id, name, slug, active, created_at,
                supports_dine_in boolean default true, supports_pickup boolean default true,
-               supports_delivery boolean default false, reseller_enabled boolean default false)
-products      (id, store_id, external_code, name, ncm, unit, category, description, image_url,
-               stock_quantity, cost_price, price, sort_order, active, created_at,
-               available_retail boolean default true, available_reseller boolean default false)
+               supports_delivery boolean default false, reseller_enabled boolean default false,
+               whatsapp_number)   -- número que recebe o pedido via WhatsApp (só rota delivery, ver "Confirmação de pedido")
+products      (id, store_id, name, category, description, image_url, unit, price, lover_price,
+               stock_quantity, track_stock, sort_order, active, created_at,
+               available_dine_in boolean, available_pickup boolean, available_delivery boolean)
+               -- lover_price: preço alternativo pro cliente "Cacau Lover" (ver seção própria abaixo)
+               -- colunas internas fora da view public_products (não confirmado se ainda existem
+               -- na tabela completa): external_code, ncm, cost_price
+               -- available_retail/available_reseller (do desenho original do canal atacado) não
+               -- aparecem em public_products hoje — filtro de catálogo por canal usa
+               -- available_dine_in/pickup/delivery; ver "Canal de revendedor" pra status real
+addon_groups          (id, store_id, name, active)
+addon_options         (id, addon_group_id, name, price, active)
+product_addon_groups  (product_id, addon_group_id, selection_type: single|multiple, max_quantity nullable, sort_order)
+variation_groups          (id, store_id, name, price_mode: replace|additive, active)
+variation_options         (id, variation_group_id, name, price, active)
+                          -- lover_price ainda NÃO existe nessa tabela (pedido feito ao admin,
+                          -- pendente ALTER TABLE) — enquanto isso o client usa price como lover_price
+                          -- também, então variação nunca mostra desconto Lover de verdade
+product_variation_groups (product_id, variation_group_id, sort_order)
 orders        (id, store_id, customer_name, customer_cpf, customer_phone,
                order_type: dine_in|pickup|delivery, status,
                sales_channel: retail|reseller default 'retail',
@@ -208,11 +224,31 @@ orders        (id, store_id, customer_name, customer_cpf, customer_phone,
 order_items   (id, order_id, product_id, quantity, unit_price)   -- cópia do preço no momento
                                                                     -- do pedido, nunca referencie
                                                                     -- products.price direto
+                                                                    -- (não confirmado se guarda addon/variação escolhida — ver RPC confirm_order)
 order_status_history (id, order_id, status, changed_by, changed_at)
 ```
 
 ## Confirmação de pedido (RPC `confirm_order`)
 Cliente final não tem `INSERT` direto em `orders`/`order_items` (RLS bloqueia — testado, confirmado). Escrita passa pela função Postgres `confirm_order(p_store_id, p_order_type, p_customer_name, p_customer_cpf, p_customer_phone, p_delivery_address, p_items, p_table_number default null)`, `security definer`, liberada pro `anon` via `grant execute`. `p_table_number` é `text`, só preenchido quando `order_type = 'dine_in'` — hoje pedido manualmente na tela de identificação (`IdentificationPage`), não pré-preenchido por QR code (rota `/loja/:storeSlug/mesa/:numeroMesa` ainda não implementada neste repo). Ela recalcula `unit_price` a partir de `products.price` no momento da confirmação (cliente não consegue forjar preço mandando `unit_price` direto), valida loja ativa e produto ativo/da mesma loja, grava pedido + itens de forma atômica, sempre com `status = 'received'` (fixo pela função — client não manda status). Implementação em `infrastructure/order/SupabaseOrderRepository.ts` (chama `supabase.rpc('confirm_order', ...)`), caso de uso em `application/order/confirmOrder.ts`.
+
+Cada item de `p_items` carrega `product_id, quantity, note, addons: [{addon_option_id}], variations: [{variation_option_id}]` — confirmado (via chamada direta à RPC) que a função já lê `addons`/`variations` sem erro de schema; não confirmado ainda como ela grava essa seleção em `order_items` (tabela documentada acima não expõe essas colunas do lado client, então a gravação é opaca a este repositório).
+
+**Aviso via WhatsApp (só pedido `delivery`)**: se `store.whatsapp_number` existir, `ReviewPage` monta um link `wa.me` com o resumo do pedido (`presentation/order/whatsappOrderMessage.ts`) depois que `confirm_order` responde com sucesso, e mostra o link na tela de acompanhamento. Não substitui a RPC — é só um atalho pra loja também saber pelo WhatsApp; a fonte de verdade do pedido continua sendo o banco. Só dispara em `delivery` (dine_in/pickup não geram link).
+
+## Adicionais e variações de produto (`addon`, `variation`)
+Produto pode ter grupos de **adicional** (`AddonGroup`/`AddonOption`, ex: "Cobertura extra") e de **variação** (`VariationGroup`/`VariationOption`, ex: "Tamanho"), lidos por `useProductAddons`/`useProductVariations` e escolhidos no `ProductDetailModal` antes de ir pro carrinho.
+- **Adicional**: sempre soma ao preço base (`addon_options.price`). `selection_type` (`single`/`multiple`) e `max_quantity` (de `product_addon_groups`) controlam quantas opções o cliente pode marcar por grupo.
+- **Variação**: `variation_groups.price_mode` decide o efeito no preço —
+  - `replace`: o preço da opção escolhida **substitui** o preço base do produto (ex: tamanho Grande = R$15, ignora o preço do produto).
+  - `additive`: o preço da opção **soma** ao preço base (ex: chocolate belga +R$2).
+  - Lógica em `domain/variation/variationSelection.ts` (`resolveBasePrice`).
+- Duas seleções diferentes de adicional/variação pro mesmo produto viram **linhas separadas no carrinho** (`domain/cart/Cart.ts`, `cartItemId` combina `product.id` + ids escolhidos, não só `product.id`).
+
+## Preço duplo — "Cacau Lover"
+Cliente que é "Cacau Lover" paga um preço menor no mesmo produto — não é cadastro/conta, é preço promocional exibido lado a lado com o preço normal em todo lugar que mostra preço (cardápio, carrinho, revisão, mensagem de WhatsApp). Copy atual (`whatsappOrderMessage.ts`) diz que **o CPF é validado na entrega** pra confirmar se o cliente é Cacau Lover — ou seja, o desconto é mostrado no client mas a validação de quem realmente é Lover acontece manualmente do lado da loja, não no banco.
+- `products.lover_price` é real e populado no banco (confirmado via API — ex: produto de R$8 com `lover_price` R$6.9).
+- `variation_options.lover_price` **ainda não existe** na tabela (ver "Modelo de dados") — o client usa `price` como `loverPrice` de variação enquanto isso, então o preço Lover de uma variação nunca reflete desconto de verdade até o `admin` rodar o `ALTER TABLE`.
+- Cálculo em `domain/cart/Cart.ts` (`itemUnitLoverPrice`, `cartLoverTotal`) e `domain/variation/variationSelection.ts` (`resolveBasePrice` devolve `{ regular, lover }`).
 
 ## Acompanhamento de pedido (RPC `get_order_status`)
 Mesma lógica de segurança do `confirm_order`: cliente final não tem `SELECT` em `orders` (vazaria nome/CPF/telefone/endereço de todo mundo pro anon key). `get_order_status(p_order_id uuid, p_customer_cpf text)` devolve só o `status` (texto), e só pra quem sabe o `id` do pedido **e** o CPF usado nele — não dá pra listar/adivinhar pedido de outra pessoa só sabendo o CPF (mais forte que o modelo de "CPF sozinho" aceito em outros lugares deste doc, porque aqui dá pra ser mais forte sem custo de fricção extra: o id já existe no navegador de quem acabou de confirmar).
@@ -224,11 +260,15 @@ Sem WebSocket/Realtime de verdade — a tela de acompanhamento (`presentation/or
 **Importante**: este app nunca consulta a tabela `products` diretamente — usa a view `public_products` (mesmas colunas, exceto `cost_price` e `external_code`, que são informação interna da loja). Se algum dia precisar de um campo que só existe na tabela completa, é sinal de que ele deveria estar na view também, não de usar a tabela direto.
 
 ## Canal de revendedor (`/atacado`)
+**Status atual: não implementado.** `App.tsx` não tem rota `/:storeSlug/atacado`; `public_products` hoje não expõe `available_retail`/`available_reseller` (só `available_dine_in/pickup/delivery`); nenhuma tela usa `sales_channel`. Ainda é item aberto no Marco 1. Design pretendido, registrado aqui pra quando for implementar:
+
 Mesma loja, mesmo preço, mesma identificação por CPF do cliente comum — **não é um papel novo**, é a mesma rota de checkout com o canal marcado diferente. Rota: `/:storeSlug/atacado`, sempre derivada do slug da loja, só existe se `stores.reseller_enabled = true`. Diferenças de comportamento nessa rota:
 - Catálogo filtra por `available_reseller` em vez de `available_retail`
 - Tipo de pedido não oferece `dine_in` — só `pickup` ou `delivery`
 - Pedido nasce com `sales_channel = 'reseller'`
 Reaproveite os mesmos componentes de carrinho/checkout da rota normal — a diferença é um parâmetro de canal passado adiante (`domain`/`application`), não uma tela duplicada.
+
+Antes de implementar: confirmar com o `admin` se `available_retail`/`available_reseller` ainda fazem parte do plano de schema, já que o catálogo migrou pra filtro por `available_dine_in/pickup/delivery` nesse meio tempo — pode ser que o desenho de canal precise ser revisado, não só implementado como está descrito acima.
 
 ## Arquitetura limpa (Clean Architecture)
 4 camadas, dependência sempre de fora pra dentro:

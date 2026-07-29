@@ -7,4 +7,5 @@ export interface Store {
   supportsPickup: boolean
   supportsDelivery: boolean
   resellerEnabled: boolean
+  whatsappNumber: string | null
 }

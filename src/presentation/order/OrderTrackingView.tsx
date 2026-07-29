@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Check, X } from 'lucide-react'
+import { Check, MessageCircle, X } from 'lucide-react'
 import { currentStepIndex, orderStatusSteps } from '../../domain/order/orderStatusSteps'
 import type { OrderType } from '../../domain/order/OrderType'
 import { useCart } from '../cart/useCart'
@@ -13,9 +13,10 @@ interface OrderTrackingViewProps {
   orderType: OrderType
   tableNumber: string | null
   customerCpf: string
+  whatsappUrl?: string | null
 }
 
-export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf }: OrderTrackingViewProps) {
+export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf, whatsappUrl }: OrderTrackingViewProps) {
   const store = useCurrentStore()
   const navigate = useNavigate()
   const clearCart = useCart((state) => state.clear)
@@ -56,6 +57,21 @@ export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf
               Vamos preparar tudo com carinho.
             </p>
           </div>
+
+          {whatsappUrl && (
+            <div className="w-full rounded-2xl bg-primary/10 p-4">
+              <p className="font-body text-sm text-accent">Finalize o pedido no WhatsApp pra combinar a entrega.</p>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex h-11 min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <MessageCircle size={18} aria-hidden="true" />
+                Abrir WhatsApp
+              </a>
+            </div>
+          )}
 
           {isLoading ? (
             <p className="font-body text-sm text-foreground/60">Carregando status…</p>

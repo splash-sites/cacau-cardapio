@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { confirmOrder } from '../../application/order/confirmOrder'
-import { cartTotal } from '../../domain/cart/Cart'
+import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useCart } from '../cart/useCart'
 import { useCustomer } from '../customer/useCustomer'
@@ -12,6 +12,7 @@ import { useCurrentStore } from '../store/useCurrentStore'
 import { PageShell } from '../shared/PageShell'
 import { OrderTrackingView } from './OrderTrackingView'
 import { useOrderType } from './useOrderType'
+import { buildWhatsappOrderMessage, buildWhatsappUrl } from './whatsappOrderMessage'
 
 export function ReviewPage() {
   const store = useCurrentStore()
@@ -24,6 +25,7 @@ export function ReviewPage() {
 
   const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle')
   const [orderId, setOrderId] = useState<string | null>(null)
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
@@ -31,7 +33,13 @@ export function ReviewPage() {
 
   if (orderId) {
     return (
-      <OrderTrackingView orderId={orderId} orderType={orderType} tableNumber={tableNumber} customerCpf={customer.cpf} />
+      <OrderTrackingView
+        orderId={orderId}
+        orderType={orderType}
+        tableNumber={tableNumber}
+        customerCpf={customer.cpf}
+        whatsappUrl={whatsappUrl}
+      />
     )
   }
 
@@ -47,6 +55,11 @@ export function ReviewPage() {
         items,
         tableNumber,
       })
+      // Precisa montar a mensagem antes do clearCart — depois disso os itens somem do estado.
+      if (orderType === 'delivery' && store.whatsappNumber) {
+        const message = buildWhatsappOrderMessage(store.name, customer, items)
+        setWhatsappUrl(buildWhatsappUrl(store.whatsappNumber, message))
+      }
       clearCart()
       setOrderId(result.id)
     } catch (err) {
@@ -76,16 +89,32 @@ export function ReviewPage() {
           {orderType === 'dine_in' && tableNumber ? ` · Mesa ${tableNumber}` : ''}
         </h2>
         <ul>
-          {items.map(({ product, quantity }) => (
-            <li key={product.id} className="flex justify-between border-b border-secondary/15 py-2 font-body">
-              <span>{quantity}× {product.name}</span>
-              <span>{formatPrice(product.price * quantity)}</span>
-            </li>
-          ))}
+          {items.map((item) => {
+            const { id, product, quantity, addons, variations } = item
+            const unitLover = itemUnitLoverPrice(item)
+            const unitRegular = itemUnitPrice(item)
+            const detailLine = [...variations.map((v) => v.name), ...addons.map((a) => a.name)].join(', ')
+
+            return (
+              <li key={id} className="flex justify-between border-b border-secondary/15 py-2 font-body">
+                <div>
+                  <span>{quantity}× {product.name}</span>
+                  {detailLine && <p className="font-body text-xs text-foreground/60">{detailLine}</p>}
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-primary">{formatPrice(unitLover * quantity)}</p>
+                  <p className="text-xs text-foreground/50">{formatPrice(unitRegular * quantity)}</p>
+                </div>
+              </li>
+            )
+          })}
         </ul>
-        <div className="flex justify-between pt-2 font-body font-medium text-secondary">
-          <span>Total</span>
-          <span>{formatPrice(cartTotal(items))}</span>
+        <div className="flex justify-between pt-2 font-body">
+          <span className="font-medium text-secondary">Total</span>
+          <div className="text-right">
+            <p className="font-medium text-primary">Cacau Lovers* {formatPrice(cartLoverTotal(items))}</p>
+            <p className="text-sm text-foreground/50">{formatPrice(cartTotal(items))}</p>
+          </div>
         </div>
       </section>
 

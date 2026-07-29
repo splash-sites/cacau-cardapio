@@ -7,6 +7,7 @@ export interface Product {
   imageUrl: string | null
   unit: string | null
   price: number
+  loverPrice: number
   stockQuantity: number
   trackStock: boolean
   sortOrder: number

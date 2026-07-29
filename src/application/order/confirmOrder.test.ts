@@ -13,6 +13,7 @@ function makeProduct(overrides: Partial<Product> = {}): Product {
     imageUrl: null,
     unit: 'un',
     price: 9.9,
+    loverPrice: 8.9,
     stockQuantity: 10,
     trackStock: false,
     sortOrder: 0,
@@ -29,7 +30,7 @@ function makeInput(overrides: Partial<CreateOrderInput> = {}): CreateOrderInput 
     storeId: 'store-1',
     orderType: 'pickup',
     customer: { fullName: 'Maria Silva', cpf: '52998224725', phone: '51999998888', address: null },
-    items: [{ product: makeProduct(), quantity: 1 }],
+    items: [{ id: 'p1', product: makeProduct(), quantity: 1, addons: [], variations: [] }],
     ...overrides,
   }
 }

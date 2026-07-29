@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import type { Product } from '../../domain/menu/Product'
 import { formatPrice } from './formatPrice'
-import { mockLoverPrice } from './mockLoverPricing'
 import { ProductDetailModal } from './ProductDetailModal'
 
 export function ProductCard({ product }: { product: Product }) {
@@ -29,7 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
           Cacau Lovers*
         </span>
         <div className="mt-0.5 flex items-baseline gap-2">
-          <span className="font-body text-[19px] font-bold text-primary">{formatPrice(mockLoverPrice(product.price))}</span>
+          <span className="font-body text-[19px] font-bold text-primary">{formatPrice(product.loverPrice)}</span>
           <span className="font-body text-sm text-foreground/50">{formatPrice(product.price)}</span>
         </div>
       </div>

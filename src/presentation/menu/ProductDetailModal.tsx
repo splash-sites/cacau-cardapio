@@ -1,10 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, X } from 'lucide-react'
+import type { AddonGroup } from '../../domain/addon/AddonGroup'
+import {
+  type AddonSelections,
+  addonSelectionsLoverTotal,
+  addonSelectionsTotal,
+  groupSelectedQuantity,
+  resolveSelectedAddons,
+  toggleAddonOption,
+} from '../../domain/addon/addonSelection'
+import { cartItemId } from '../../domain/cart/Cart'
 import type { Product } from '../../domain/menu/Product'
+import type { VariationGroup } from '../../domain/variation/VariationGroup'
+import {
+  isVariationSelectionComplete,
+  resolveBasePrice,
+  resolveSelectedVariations,
+  selectVariationOption,
+  type VariationSelections,
+} from '../../domain/variation/variationSelection'
 import { useCart } from '../cart/useCart'
 import { formatPrice } from './formatPrice'
 import { ImageLightbox } from './ImageLightbox'
-import { MOCK_EXTRAS, mockLoverPrice } from './mockLoverPricing'
+import { useProductAddons } from './useProductAddons'
+import { useProductVariations } from './useProductVariations'
 
 const TRANSITION_MS = 300
 const UNMOUNT_DELAY_MS = 310
@@ -12,15 +31,18 @@ const SWIPE_CLOSE_THRESHOLD_PX = 90
 
 export function ProductDetailModal({ product, onClose }: { product: Product; onClose: () => void }) {
   const addItem = useCart((state) => state.addItem)
-  const incrementItem = useCart((state) => state.incrementItem)
   const setNote = useCart((state) => state.setNote)
+
+  const { data: addonGroups } = useProductAddons(product.id)
+  const { data: variationGroups } = useProductVariations(product.id)
 
   const [visible, setVisible] = useState(false)
   const [dragY, setDragY] = useState(0)
   const [dragging, setDragging] = useState(false)
   const dragStartY = useRef<number | null>(null)
 
-  const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set())
+  const [selections, setSelections] = useState<AddonSelections>({})
+  const [variationSelections, setVariationSelections] = useState<VariationSelections>({})
   const [notes, setNotes] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -46,15 +68,6 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
     setTimeout(onClose, UNMOUNT_DELAY_MS)
   }
 
-  function toggleExtra(id: string) {
-    setSelectedExtras((current) => {
-      const next = new Set(current)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
   function handleTouchStart(event: React.TouchEvent) {
     dragStartY.current = event.touches[0].clientY
     setDragging(true)
@@ -73,23 +86,23 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
     setDragging(false)
   }
 
+  const groups = addonGroups ?? []
+  const varGroups = variationGroups ?? []
+  const variations = resolveSelectedVariations(variationSelections, varGroups)
+  const variationsComplete = isVariationSelectionComplete(variationSelections, varGroups)
+
   function handleAdd() {
-    addItem(product)
-    for (let i = 1; i < quantity; i++) incrementItem(product.id)
-    if (notes.trim()) setNote(product.id, notes.trim())
+    const selectedAddons = resolveSelectedAddons(selections, groups)
+    addItem(product, selectedAddons, variations, quantity)
+    if (notes.trim()) setNote(cartItemId(product.id, selectedAddons, variations), notes.trim())
     handleClose()
   }
 
-  const extrasLoverSum = [...selectedExtras].reduce(
-    (sum, id) => sum + (MOCK_EXTRAS.find((extra) => extra.id === id)?.loverPrice ?? 0),
-    0,
-  )
-  const extrasRegularSum = [...selectedExtras].reduce(
-    (sum, id) => sum + (MOCK_EXTRAS.find((extra) => extra.id === id)?.regularPrice ?? 0),
-    0,
-  )
-  const loverTotal = (mockLoverPrice(product.price) + extrasLoverSum) * quantity
-  const regularTotal = (product.price + extrasRegularSum) * quantity
+  const addonsTotal = addonSelectionsTotal(selections, groups)
+  const addonsLoverTotal = addonSelectionsLoverTotal(selections, groups)
+  const { regular: baseRegular, lover: baseLover } = resolveBasePrice(product, variations)
+  const loverTotal = (baseLover + addonsLoverTotal) * quantity
+  const regularTotal = (baseRegular + addonsTotal) * quantity
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" role="presentation">
@@ -153,44 +166,35 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           <div className="flex flex-col gap-4 px-4 py-4">
             <div>
               <h2 className="font-display text-2xl font-bold text-accent">{product.name}</h2>
+              {product.description && (
+                <p className="mt-1 font-body text-sm text-foreground/70">{product.description}</p>
+              )}
               <p className="mt-1 font-body text-sm">
-                <span className="font-medium text-primary">Lover {formatPrice(mockLoverPrice(product.price))}</span>
+                <span className="font-medium text-primary">Lover {formatPrice(baseLover)}</span>
                 <span className="text-foreground/40"> | </span>
-                <span className="text-foreground/60">Não Lover {formatPrice(product.price)}</span>
+                <span className="text-foreground/60">Não Lover {formatPrice(baseRegular)}</span>
               </p>
             </div>
 
-            <div>
-              <p className="font-body text-xs font-bold uppercase tracking-wide text-secondary">Ingredientes extras</p>
-              <div className="mt-1 flex flex-col">
-                {MOCK_EXTRAS.map((extra) => {
-                  const selected = selectedExtras.has(extra.id)
-                  return (
-                    <button
-                      key={extra.id}
-                      type="button"
-                      role="checkbox"
-                      aria-checked={selected}
-                      onClick={() => toggleExtra(extra.id)}
-                      className="flex min-h-11 w-full items-center gap-3 rounded-xl text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
-                    >
-                      <span
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
-                          selected ? 'border-primary bg-primary text-primary-foreground' : 'border-secondary/30 bg-white'
-                        }`}
-                      >
-                        {selected && <Check size={14} aria-hidden="true" />}
-                      </span>
-                      <span className="flex-1 font-body text-sm text-foreground">{extra.name}</span>
-                      <span className="whitespace-nowrap font-body text-xs">
-                        <span className="font-medium text-primary">+{formatPrice(extra.loverPrice)}</span>{' '}
-                        <span className="text-foreground/50">/ +{formatPrice(extra.regularPrice)}</span>
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+            {varGroups.map((group) => (
+              <VariationGroupSection
+                key={group.id}
+                group={group}
+                selectedOptionId={variationSelections[group.id]}
+                onSelect={(optionId) =>
+                  setVariationSelections((current) => selectVariationOption(current, group.id, optionId))
+                }
+              />
+            ))}
+
+            {groups.map((group) => (
+              <AddonGroupSection
+                key={group.id}
+                group={group}
+                selections={selections}
+                onChange={setSelections}
+              />
+            ))}
 
             <label className="flex flex-col gap-1">
               <span className="font-body text-xs font-bold uppercase tracking-wide text-secondary">Observações</span>
@@ -233,10 +237,14 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
             <span className="font-medium text-primary">Cacau Lovers* {formatPrice(loverTotal)}</span>
             <span className="text-foreground/50">{formatPrice(regularTotal)}</span>
           </div>
+          {!variationsComplete && (
+            <p className="mb-2 text-center font-body text-xs text-secondary">Escolha as opções acima pra continuar</p>
+          )}
           <button
             type="button"
             onClick={handleAdd}
-            className="h-11 min-h-11 w-full rounded-2xl bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            disabled={!variationsComplete}
+            className="h-11 min-h-11 w-full rounded-2xl bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
           >
             Adicionar ao pedido
           </button>
@@ -251,6 +259,122 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           onClose={() => setLightboxOpen(false)}
         />
       )}
+    </div>
+  )
+}
+
+function VariationGroupSection({
+  group,
+  selectedOptionId,
+  onSelect,
+}: {
+  group: VariationGroup
+  selectedOptionId: string | undefined
+  onSelect: (optionId: string) => void
+}) {
+  return (
+    <div>
+      <p className="font-body text-xs font-bold uppercase tracking-wide text-secondary">{group.name}</p>
+      <div className="mt-1 flex flex-col gap-1">
+        {group.options.map((option) => {
+          const selected = option.id === selectedOptionId
+          return (
+            <button
+              key={option.id}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onSelect(option.id)}
+              className="flex min-h-11 w-full items-center gap-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                  selected ? 'border-primary' : 'border-secondary/30'
+                }`}
+              >
+                {selected && <span className="h-3 w-3 rounded-full bg-primary" aria-hidden="true" />}
+              </span>
+              <span className="flex-1 font-body text-sm text-foreground">{option.name}</span>
+              {option.price !== 0 && (
+                <span className="flex flex-col items-end font-body text-xs leading-tight">
+                  <span className="font-medium text-primary">
+                    {option.loverPrice !== option.price && 'Lover* '}
+                    {group.priceMode === 'replace' ? formatPrice(option.loverPrice) : `+${formatPrice(option.loverPrice)}`}
+                  </span>
+                  {option.loverPrice !== option.price && (
+                    <span className="text-foreground/50">
+                      {group.priceMode === 'replace' ? formatPrice(option.price) : `+${formatPrice(option.price)}`}
+                    </span>
+                  )}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function AddonGroupSection({
+  group,
+  selections,
+  onChange,
+}: {
+  group: AddonGroup
+  selections: AddonSelections
+  onChange: (selections: AddonSelections) => void
+}) {
+  const isFull = group.maxQuantity !== null && groupSelectedQuantity(selections, group) >= group.maxQuantity
+
+  return (
+    <div>
+      <p className="font-body text-xs font-bold uppercase tracking-wide text-secondary">{group.name}</p>
+      <div className="mt-1 flex flex-col gap-1">
+        {group.options.map((option) => {
+          const selected = (selections[option.id] ?? 0) > 0
+          const blocked = !selected && group.selectionType === 'multiple' && isFull
+
+          return (
+            <button
+              key={option.id}
+              type="button"
+              role={group.selectionType === 'single' ? 'radio' : 'checkbox'}
+              aria-checked={selected}
+              disabled={blocked}
+              onClick={() => onChange(toggleAddonOption(selections, group, option.id))}
+              className="flex min-h-11 w-full items-center gap-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-40"
+            >
+              {group.selectionType === 'single' ? (
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                    selected ? 'border-primary' : 'border-secondary/30'
+                  }`}
+                >
+                  {selected && <span className="h-3 w-3 rounded-full bg-primary" aria-hidden="true" />}
+                </span>
+              ) : (
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                    selected ? 'border-primary bg-primary text-primary-foreground' : 'border-secondary/30 bg-white'
+                  }`}
+                >
+                  {selected && <Check size={14} aria-hidden="true" />}
+                </span>
+              )}
+              <span className="flex-1 font-body text-sm text-foreground">{option.name}</span>
+              <span className="flex flex-col items-end font-body text-xs leading-tight">
+                <span className="font-medium text-primary">
+                  {option.loverPrice !== option.price && 'Lover* '}+{formatPrice(option.loverPrice)}
+                </span>
+                {option.loverPrice !== option.price && (
+                  <span className="text-foreground/50">+{formatPrice(option.price)}</span>
+                )}
+              </span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

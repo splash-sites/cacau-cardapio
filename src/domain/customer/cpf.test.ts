@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isValidCpf, normalizeCpf } from './cpf'
+import { formatCpf, isValidCpf, normalizeCpf } from './cpf'
 
 describe('isValidCpf', () => {
   it('aceita CPF válido formatado', () => {
@@ -26,5 +26,15 @@ describe('isValidCpf', () => {
 describe('normalizeCpf', () => {
   it('remove pontuação', () => {
     expect(normalizeCpf('529.982.247-25')).toBe('52998224725')
+  })
+})
+
+describe('formatCpf', () => {
+  it('formata CPF sem pontuação', () => {
+    expect(formatCpf('52998224725')).toBe('529.982.247-25')
+  })
+
+  it('mantém formatado se já vier formatado', () => {
+    expect(formatCpf('529.982.247-25')).toBe('529.982.247-25')
   })
 })

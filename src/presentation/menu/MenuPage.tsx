@@ -1,6 +1,7 @@
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { cartItemCount, cartTotal } from '../../domain/cart/Cart'
+import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
@@ -35,7 +36,7 @@ export function MenuPage() {
             <ArrowLeft size={20} aria-hidden="true" />
           </button>
           <div>
-            <h1 className="font-display text-2xl">{store.name}</h1>
+            <h1 className="font-display text-2xl">{orderTypeLabel(orderType)}</h1>
             <p className="font-body text-sm text-background/70">Monte seu pedido com carinho, no seu ritmo.</p>
           </div>
         </div>

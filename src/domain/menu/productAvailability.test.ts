@@ -12,6 +12,7 @@ function makeProduct(overrides: Partial<Product> = {}): Product {
     imageUrl: null,
     unit: 'un',
     price: 9.9,
+    loverPrice: 8.9,
     stockQuantity: 10,
     trackStock: true,
     sortOrder: 0,
