@@ -8,8 +8,10 @@ import { useCurrentStore } from '../store/useCurrentStore'
 import { FixedBottomBar } from '../shared/FixedBottomBar'
 import { PageShell } from '../shared/PageShell'
 import { ProductCard } from './ProductCard'
+import { PromotionCarousel } from './PromotionCarousel'
 import { formatPrice } from './formatPrice'
 import { useMenu } from './useMenu'
+import { usePromotions } from './usePromotions'
 
 export function MenuPage() {
   const store = useCurrentStore()
@@ -18,6 +20,7 @@ export function MenuPage() {
   const navigate = useNavigate()
 
   const { data: groups, isLoading, isError } = useMenu(store.id, orderType ?? 'dine_in')
+  const { data: promotions } = usePromotions(store.id)
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
 
@@ -51,6 +54,10 @@ export function MenuPage() {
       </div>
 
       <div className="px-4 py-6 pb-24">
+        {groups && promotions && promotions.length > 0 && (
+          <PromotionCarousel promotions={promotions} products={[...groups.values()].flat()} />
+        )}
+
         {isLoading && <p className="font-body text-foreground/70">Carregando cardápio…</p>}
         {isError && <p className="font-body text-red-600">Não foi possível carregar o cardápio agora.</p>}
         {groups && groups.size === 0 && (

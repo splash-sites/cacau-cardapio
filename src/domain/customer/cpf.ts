@@ -7,6 +7,16 @@ export function formatCpf(raw: string): string {
   return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
 }
 
+// Progressivo (funciona com CPF incompleto) — pra mascarar input em tempo
+// real, diferente de formatCpf que só formata CPF já completo (11 dígitos).
+export function maskCpf(raw: string): string {
+  const digits = normalizeCpf(raw).slice(0, 11)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
+}
+
 function checkDigit(base: string, factorStart: number): number {
   let sum = 0
   for (let i = 0; i < base.length; i++) {

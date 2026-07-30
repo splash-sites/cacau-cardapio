@@ -15,7 +15,7 @@ export const addressSchema = z.object({
 const identificationObjectSchema = z.object({
   fullName: z.string().min(2, 'Nome muito curto'),
   cpf: z.string().refine(isValidCpf, 'CPF inválido'),
-  phone: z.string().regex(/^\(?\d{2}\)?\s?9?\d{4}-?\d{4}$/, 'Telefone inválido'),
+  phone: z.string().regex(/^\(?\d{2}\)?\s?9?\s?\d{4}-?\d{4}$/, 'Telefone inválido'),
   address: addressSchema.optional(),
   tableNumber: z.string().optional(),
 })

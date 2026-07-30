@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { identificationSchema, type IdentificationInput } from '../../application/customer/schemas'
+import { maskCpf } from '../../domain/customer/cpf'
+import { maskPhone } from '../../domain/customer/phone'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
@@ -32,10 +34,13 @@ export function IdentificationPage() {
     // vem pré-preenchido, é sempre pedido de novo pra ficar atualizado.
     defaultValues: {
       fullName: customer?.fullName ?? '',
-      cpf: customer?.cpf ?? '',
-      phone: customer?.phone ?? '',
+      cpf: customer?.cpf ? maskCpf(customer.cpf) : '',
+      phone: customer?.phone ? maskPhone(customer.phone) : '',
     },
   })
+
+  const { onChange: onCpfChange, ...cpfField } = register('cpf')
+  const { onChange: onPhoneChange, ...phoneField } = register('phone')
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
   if (items.length === 0) return <Navigate to={`/${store.slug}/cardapio`} replace />
@@ -77,8 +82,13 @@ export function IdentificationPage() {
             type="text"
             inputMode="numeric"
             placeholder="000.000.000-00"
+            maxLength={14}
             className={`normal-case ${INPUT}`}
-            {...register('cpf')}
+            {...cpfField}
+            onChange={(event) => {
+              event.target.value = maskCpf(event.target.value)
+              onCpfChange(event)
+            }}
           />
           {errors.cpf && <span className="font-body text-xs font-normal normal-case text-red-600">{errors.cpf.message}</span>}
         </label>
@@ -88,9 +98,14 @@ export function IdentificationPage() {
             type="tel"
             inputMode="tel"
             autoComplete="tel"
-            placeholder="(00) 00000-0000"
+            placeholder="(00) 0 0000-0000"
+            maxLength={16}
             className={`normal-case ${INPUT}`}
-            {...register('phone')}
+            {...phoneField}
+            onChange={(event) => {
+              event.target.value = maskPhone(event.target.value)
+              onPhoneChange(event)
+            }}
           />
           {errors.phone && <span className="font-body text-xs font-normal normal-case text-red-600">{errors.phone.message}</span>}
         </label>

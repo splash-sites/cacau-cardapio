@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { isOrderFromToday } from '../../domain/order/isOrderFromToday'
 import { orderSummaryTotal } from '../../domain/order/orderSummaryTotal'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { isValidCpf } from '../../domain/customer/cpf'
@@ -99,14 +100,24 @@ function CpfLookupForm({ onSubmit }: { onSubmit: (cpf: string) => void }) {
   )
 }
 
+type OrdersTab = 'today' | 'history'
+
+const TAB_LABEL: Record<OrdersTab, string> = {
+  today: 'Hoje',
+  history: 'Histórico',
+}
+
 export function OrdersPage() {
   const store = useCurrentStore()
   const navigate = useNavigate()
   const knownCpf = useCustomer((state) => state.customer?.cpf ?? null)
   const [manualCpf, setManualCpf] = useState<string | null>(null)
+  const [tab, setTab] = useState<OrdersTab>('today')
   const cpf = knownCpf ?? manualCpf
 
   const { data: orders, isLoading } = useOrderHistory(store.id, cpf)
+  const todayOrders = orders?.filter((order) => isOrderFromToday(order.createdAt))
+  const visibleOrders = tab === 'today' ? todayOrders : orders
 
   return (
     <PageShell className="text-foreground">
@@ -126,11 +137,30 @@ export function OrdersPage() {
         <CpfLookupForm onSubmit={setManualCpf} />
       ) : (
         <div className="flex flex-col gap-3 p-4">
+          <div className="flex gap-2 rounded-full bg-secondary/10 p-1" role="tablist">
+            {(['today', 'history'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="tab"
+                aria-selected={tab === option}
+                onClick={() => setTab(option)}
+                className={`h-11 min-h-11 flex-1 rounded-full font-body text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
+                  tab === option ? 'bg-primary text-primary-foreground' : 'text-secondary'
+                }`}
+              >
+                {TAB_LABEL[option]}
+              </button>
+            ))}
+          </div>
+
           {isLoading && <p className="font-body text-foreground/60">Carregando pedidos…</p>}
-          {orders && orders.length === 0 && (
-            <p className="font-body text-foreground/60">Nenhum pedido encontrado com esse CPF.</p>
+          {visibleOrders && visibleOrders.length === 0 && (
+            <p className="font-body text-foreground/60">
+              {tab === 'today' ? 'Nenhum pedido feito hoje.' : 'Nenhum pedido encontrado com esse CPF.'}
+            </p>
           )}
-          {orders?.map((order) => (
+          {visibleOrders?.map((order) => (
             <OrderCard key={order.id} order={order} />
           ))}
         </div>

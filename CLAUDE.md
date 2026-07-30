@@ -162,15 +162,15 @@ Tokens de marca (já embutidos no `@theme` do `src/index.css`, ver "Setup inicia
 ## Padrões de frontend e identidade visual
 Aviso honesto: creme + caramelo é um dos combos que mais grita "gerado por IA" quando não é intencional — no nosso caso é legítimo (marca real de café/cacau), mas isso só funciona se a personalidade vier da tipografia e da linguagem, não só da cor. Adicione ao `@theme` de `src/index.css` (idêntico ao do `admin`, pra manter os dois apps consistentes):
 ```css
---font-display: "Fraunces", serif;
+--font-display: "Orelega One", serif;
 --font-body: "Inter", sans-serif;
 ```
 E no `index.html`, dentro de `<head>`:
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orelega+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 ```
-`font-display` (Fraunces) pra títulos e nome de produto no cardápio; `font-body` (Inter) pra UI, formulário e texto corrido. Escala de tamanho: usa a escala padrão do Tailwind (`text-sm` até `text-3xl`) — não inventa tamanho solto fora dela.
+`font-display` (Orelega One) pra títulos e nome de produto no cardápio; `font-body` (Inter) pra UI, formulário e texto corrido. Orelega One só tem 1 peso (400, regular) — `font-bold`/`font-semibold` combinado com `font-display` não ganha peso real, o navegador só aplica negrito sintético. Escala de tamanho: usa a escala padrão do Tailwind (`text-sm` até `text-3xl`) — não inventa tamanho solto fora dela.
 
 Regras não-negociáveis, independente de feature:
 - **Foco de teclado sempre visível** (nunca `outline: none` sem substituir por outro indicador claro).
@@ -226,6 +226,10 @@ order_items   (id, order_id, product_id, quantity, unit_price)   -- cópia do pr
                                                                     -- products.price direto
                                                                     -- (não confirmado se guarda addon/variação escolhida — ver RPC confirm_order)
 order_status_history (id, order_id, status, changed_by, changed_at)
+promotions    (id, store_id, title, subtitle, badge_label, image_url, product_id, sort_order,
+               active default true, created_at)
+               -- carrossel de promoções do cardápio (ver "Carrossel de promoções" abaixo)
+               -- product_id references products(id) — toque no slide sempre abre o produto vinculado
 ```
 
 ## Confirmação de pedido (RPC `confirm_order`)
@@ -249,6 +253,17 @@ Cliente que é "Cacau Lover" paga um preço menor no mesmo produto — não é c
 - `products.lover_price` é real e populado no banco (confirmado via API — ex: produto de R$8 com `lover_price` R$6.9).
 - `variation_options.lover_price` **ainda não existe** na tabela (ver "Modelo de dados") — o client usa `price` como `loverPrice` de variação enquanto isso, então o preço Lover de uma variação nunca reflete desconto de verdade até o `admin` rodar o `ALTER TABLE`.
 - Cálculo em `domain/cart/Cart.ts` (`itemUnitLoverPrice`, `cartLoverTotal`) e `domain/variation/variationSelection.ts` (`resolveBasePrice` devolve `{ regular, lover }`).
+
+## Carrossel de promoções (cardápio)
+Topo do cardápio (`MenuPage`, acima da lista de categorias) mostra um carrossel de até N promoções por loja — desliza sozinho a cada 3,5s (`presentation/menu/PromotionCarousel.tsx`), com pontos de navegação clicáveis, e respeita `prefers-reduced-motion` (autoplay desliga, navegação manual continua). Cada slide **sempre** leva a um produto: toque abre o `ProductDetailModal` do produto vinculado (`product_id`), igual ao toque num `ProductCard`.
+
+- Escopo por loja: `promotions.store_id`, mesmo padrão de RLS/`grant select` via view (`public_promotions`) usado em `public_products`/`public_stores` — client nunca lê a tabela `promotions` direto.
+- Imagem vem de um bucket próprio no Storage (`promotions`), não reaproveita `products.image_url` — permite banner/arte específica da promoção, diferente da foto do produto no cardápio.
+- **Preço nunca é armazenado na promoção** — o carrossel sempre resolve `price`/`lover_price` a partir do produto vinculado, já carregado pelo `useMenu` (mesmo princípio de "nunca referencie preço congelado" já usado em `order_items`). Se o produto vinculado não estiver mais visível no cardápio atual (sem estoque, indisponível pro canal escolhido, inativo), a promoção correspondente some do carrossel — regra pura em `domain/promotion/visiblePromotions.ts`, com teste unitário.
+- `badge_label` é opcional (texto livre tipo "Combo especial", "Só hoje") — pílula acima do título, cadastrado pelo admin por promoção.
+- Controle de exibição é só `active` (boolean) + `sort_order` (inteiro) — sem período de vigência (`starts_at`/`ends_at`); pra tirar do ar, o lojista desativa manualmente pelo `admin`.
+- Repository: `infrastructure/promotion/SupabasePromotionRepository.ts` (lê `public_promotions`), hook `presentation/menu/usePromotions.ts` (TanStack Query, `queryKey: ['promotions', storeId]`).
+- **Pendente no `admin`**: tela de CRUD de promoções (título, subtitle, badge_label, upload de imagem pro bucket `promotions`, seletor de produto da própria loja, sort_order, toggle active) — este repositório só lê, não escreve.
 
 ## Acompanhamento de pedido (RPC `get_order_status`)
 Mesma lógica de segurança do `confirm_order`: cliente final não tem `SELECT` em `orders` (vazaria nome/CPF/telefone/endereço de todo mundo pro anon key). `get_order_status(p_order_id uuid, p_customer_cpf text)` devolve só o `status` (texto), e só pra quem sabe o `id` do pedido **e** o CPF usado nele — não dá pra listar/adivinhar pedido de outra pessoa só sabendo o CPF (mais forte que o modelo de "CPF sozinho" aceito em outros lugares deste doc, porque aqui dá pra ser mais forte sem custo de fricção extra: o id já existe no navegador de quem acabou de confirmar).
