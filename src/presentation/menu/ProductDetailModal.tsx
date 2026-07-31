@@ -111,7 +111,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
       <div
         onClick={handleClose}
         style={{ transitionDuration: `${TRANSITION_MS}ms` }}
-        className={`absolute inset-0 bg-black/50 transition-opacity ease-out ${visible ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/50 transition-opacity ease-out motion-reduce:transition-none ${visible ? 'opacity-100' : 'opacity-0'}`}
       />
 
       <div
@@ -123,7 +123,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
         }}
         className={`relative z-10 flex max-h-[88vh] w-full max-w-sm flex-col overflow-hidden rounded-t-[20px] bg-background shadow-xl ease-out ${
-          dragging ? '' : 'transition-transform'
+          dragging ? '' : 'transition-transform motion-reduce:transition-none'
         }`}
       >
         <div

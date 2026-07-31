@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { isOrderFromToday } from '../../domain/order/isOrderFromToday'
 import { orderSummaryTotal } from '../../domain/order/orderSummaryTotal'
+import { recentOrders } from '../../domain/order/recentOrders'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { isValidCpf } from '../../domain/customer/cpf'
 import { useCurrentStore } from '../store/useCurrentStore'
@@ -100,6 +101,8 @@ function CpfLookupForm({ onSubmit }: { onSubmit: (cpf: string) => void }) {
   )
 }
 
+const HISTORY_LIMIT = 50
+
 type OrdersTab = 'today' | 'history'
 
 const TAB_LABEL: Record<OrdersTab, string> = {
@@ -115,9 +118,10 @@ export function OrdersPage() {
   const [tab, setTab] = useState<OrdersTab>('today')
   const cpf = knownCpf ?? manualCpf
 
-  const { data: orders, isLoading } = useOrderHistory(store.id, cpf)
+  const { data: orders, isPending, isError } = useOrderHistory(store.id, cpf)
   const todayOrders = orders?.filter((order) => isOrderFromToday(order.createdAt))
-  const visibleOrders = tab === 'today' ? todayOrders : orders
+  const historyOrders = orders && recentOrders(orders, HISTORY_LIMIT)
+  const visibleOrders = tab === 'today' ? todayOrders : historyOrders
 
   return (
     <PageShell className="text-foreground">
@@ -154,7 +158,13 @@ export function OrdersPage() {
             ))}
           </div>
 
-          {isLoading && <p className="font-body text-foreground/60">Carregando pedidos…</p>}
+          {isPending && (
+            <p className={`font-body ${isError ? 'text-red-600' : 'text-foreground/60'}`}>
+              {isError
+                ? 'Não foi possível carregar seus pedidos agora. Tentando de novo automaticamente…'
+                : 'Carregando pedidos…'}
+            </p>
+          )}
           {visibleOrders && visibleOrders.length === 0 && (
             <p className="font-body text-foreground/60">
               {tab === 'today' ? 'Nenhum pedido feito hoje.' : 'Nenhum pedido encontrado com esse CPF.'}

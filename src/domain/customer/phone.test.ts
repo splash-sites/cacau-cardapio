@@ -18,4 +18,18 @@ describe('maskPhone', () => {
   it('string vazia sem digitação', () => {
     expect(maskPhone('')).toBe('')
   })
+
+  it('mascara telefone fixo (10 dígitos, sem o nono dígito) sem cortar o último grupo', () => {
+    expect(maskPhone('5133334444')).toBe('(51) 3333-4444')
+  })
+
+  it('mascara fixo progressivamente enquanto digita', () => {
+    expect(maskPhone('51')).toBe('(51')
+    expect(maskPhone('513')).toBe('(51) 3')
+    expect(maskPhone('5133334')).toBe('(51) 3333-4')
+  })
+
+  it('ignora dígitos além de 10 num fixo', () => {
+    expect(maskPhone('513333444455')).toBe('(51) 3333-4444')
+  })
 })

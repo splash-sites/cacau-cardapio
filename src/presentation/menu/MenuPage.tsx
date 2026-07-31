@@ -19,7 +19,7 @@ export function MenuPage() {
   const items = useCart((state) => state.items)
   const navigate = useNavigate()
 
-  const { data: groups, isLoading, isError } = useMenu(store.id, orderType ?? 'dine_in')
+  const { data: groups, isLoading, isError } = useMenu(store.id, orderType)
   const { data: promotions } = usePromotions(store.id)
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />

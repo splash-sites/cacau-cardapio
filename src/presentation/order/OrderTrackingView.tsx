@@ -22,7 +22,7 @@ export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf
   const clearCart = useCart((state) => state.clear)
   const clearTableNumber = useOrderType((state) => state.clearTableNumber)
 
-  const { data: status, isLoading } = useOrderStatus(orderId, customerCpf)
+  const { data: status, isPending, isError } = useOrderStatus(orderId, customerCpf)
 
   const handleNewOrder = () => {
     // nome/CPF/telefone ficam guardados de propósito pra não repedir a cada
@@ -73,8 +73,12 @@ export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf
             </div>
           )}
 
-          {isLoading ? (
-            <p className="font-body text-sm text-foreground/60">Carregando status…</p>
+          {isPending ? (
+            <p className={`font-body text-sm ${isError ? 'text-red-600' : 'text-foreground/60'}`}>
+              {isError
+                ? 'Não foi possível carregar o status agora. Tentando de novo automaticamente…'
+                : 'Carregando status…'}
+            </p>
           ) : (
             <div className="w-full">
               <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${steps.length}, 1fr)` }}>
