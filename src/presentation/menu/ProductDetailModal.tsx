@@ -33,8 +33,10 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
   const addItem = useCart((state) => state.addItem)
   const setNote = useCart((state) => state.setNote)
 
-  const { data: addonGroups } = useProductAddons(product.id)
-  const { data: variationGroups } = useProductVariations(product.id)
+  const { data: addonGroups, isPending: addonsPending, isError: addonsError } = useProductAddons(product.id)
+  const { data: variationGroups, isPending: variationsPending, isError: variationsError } = useProductVariations(product.id)
+  const optionsLoading = addonsPending || variationsPending
+  const optionsLoadError = addonsError || variationsError
 
   const [visible, setVisible] = useState(false)
   const [dragY, setDragY] = useState(0)
@@ -237,13 +239,21 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
             <span className="font-medium text-primary">Cacau Lovers* {formatPrice(loverTotal)}</span>
             <span className="text-foreground/50">{formatPrice(regularTotal)}</span>
           </div>
-          {!variationsComplete && (
-            <p className="mb-2 text-center font-body text-xs text-secondary">Escolha as opções acima pra continuar</p>
+          {optionsLoadError ? (
+            <p className="mb-2 text-center font-body text-xs text-red-600">
+              Não foi possível carregar as opções deste produto. Tente fechar e abrir de novo.
+            </p>
+          ) : optionsLoading ? (
+            <p className="mb-2 text-center font-body text-xs text-foreground/50">Carregando opções…</p>
+          ) : (
+            !variationsComplete && (
+              <p className="mb-2 text-center font-body text-xs text-secondary">Escolha as opções acima pra continuar</p>
+            )
           )}
           <button
             type="button"
             onClick={handleAdd}
-            disabled={!variationsComplete}
+            disabled={!variationsComplete || optionsLoadError || optionsLoading}
             className="h-11 min-h-11 w-full rounded-2xl bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
           >
             Adicionar ao pedido

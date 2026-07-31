@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { isValidCpf } from '../../domain/customer/cpf'
+import { hasFullName } from '../../domain/customer/fullName'
 import type { OrderType } from '../../domain/order/OrderType'
 
 export const addressSchema = z.object({
@@ -9,11 +10,11 @@ export const addressSchema = z.object({
   neighborhood: z.string().min(2, 'Bairro obrigatório'),
   city: z.string().min(2, 'Cidade obrigatória'),
   state: z.string().length(2, 'UF com 2 letras'),
-  zipCode: z.string().regex(/^\d{5}-?\d{3}$/, 'CEP inválido'),
+  zipCode: z.string().regex(/^\d{5}-\d{3}$/, 'CEP inválido'),
 })
 
 const identificationObjectSchema = z.object({
-  fullName: z.string().min(2, 'Nome muito curto'),
+  fullName: z.string().trim().min(2, 'Nome muito curto').refine(hasFullName, 'Informe nome e sobrenome'),
   cpf: z.string().refine(isValidCpf, 'CPF inválido'),
   phone: z.string().regex(/^\(?\d{2}\)?\s?9?\s?\d{4}-?\d{4}$/, 'Telefone inválido'),
   address: addressSchema.optional(),

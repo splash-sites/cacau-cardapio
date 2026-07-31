@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { identificationSchema, type IdentificationInput } from '../../application/customer/schemas'
 import { maskCpf } from '../../domain/customer/cpf'
 import { maskPhone } from '../../domain/customer/phone'
+import { maskZipCode } from '../../domain/customer/zipCode'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
@@ -41,6 +42,10 @@ export function IdentificationPage() {
 
   const { onChange: onCpfChange, ...cpfField } = register('cpf')
   const { onChange: onPhoneChange, ...phoneField } = register('phone')
+  // Só registra quando o campo existe de fato (delivery) — registrar incondicionalmente
+  // faz o RHF criar `address` mesmo em dine_in/pickup, e o Zod para de tratá-lo como
+  // opcional (undefined), validando os outros campos obrigatórios do endereço à toa.
+  const zipCodeField = orderType === 'delivery' ? register('address.zipCode') : null
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
   if (items.length === 0) return <Navigate to={`/${store.slug}/cardapio`} replace />
@@ -72,8 +77,14 @@ export function IdentificationPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-4 py-6" noValidate>
         <label className={`flex flex-col gap-1 ${LABEL}`}>
-          Nome
-          <input type="text" autoComplete="name" className={`normal-case ${INPUT}`} {...register('fullName')} />
+          Nome completo
+          <input
+            type="text"
+            autoComplete="name"
+            placeholder="Nome e sobrenome"
+            className={`normal-case ${INPUT}`}
+            {...register('fullName')}
+          />
           {errors.fullName && <span className="font-body text-xs font-normal normal-case text-red-600">{errors.fullName.message}</span>}
         </label>
         <label className={`flex flex-col gap-1 ${LABEL}`}>
@@ -182,8 +193,13 @@ export function IdentificationPage() {
                 type="text"
                 inputMode="numeric"
                 placeholder="00000-000"
+                maxLength={9}
                 className={`normal-case ${INPUT}`}
-                {...register('address.zipCode')}
+                {...zipCodeField}
+                onChange={(event) => {
+                  event.target.value = maskZipCode(event.target.value)
+                  zipCodeField?.onChange(event)
+                }}
               />
               {errors.address?.zipCode && (
                 <span className="font-body text-xs font-normal normal-case text-red-600">{errors.address.zipCode.message}</span>

@@ -11,10 +11,10 @@ Banco e query sempre estiveram certos (`admin` rodou o `ALTER TABLE`, dado de "F
 
 **Não testado visualmente no navegador** (sem ferramenta de screenshot disponível na sessão) — validado por leitura de código + tsc/lint/testes (83/83) limpos. Conferir na tela antes de considerar fechado. `addon_options.lover_price` (Chantilly/Bytes) segue `null` — o admin ainda não preencheu esse lado, mas o código já está pronto pra quando preencher.
 
-### 2. `useProductAddons`/`useProductVariations` falham em silêncio
-Nenhum dos dois lê `error`/`isError` do `useQuery`. Em `ProductDetailModal.tsx:88-89`, `addonGroups ?? []` e `variationGroups ?? []` — se a query falhar (rede, RLS, coluna renomeada), o modal **não quebra**, só mostra o produto como se não tivesse nenhum adicional/variação. Cliente não percebe que devia ter opção de tamanho/adicional, loja não sabe que a query tá falhando (sem log, sem toast). Difícil de notar em produção porque não gera erro visível nenhum.
+### 2. ~~`useProductAddons`/`useProductVariations` falhavam em silêncio~~ — corrigido
+`ProductDetailModal.tsx` agora lê `isError` **e `isPending`** dos dois hooks (`optionsLoadError`, `optionsLoading`). Botão "Adicionar ao pedido" desabilita nos dois casos — erro final ou ainda carregando/tentando de novo — e mostra texto correspondente ("Não foi possível carregar as opções..." / "Carregando opções…").
 
-**Ação**: se relevante pro produto, tratar `error` explicitamente — nem que seja `console.error` ou toast discreto. Não bloqueante, só decidir se vale o esforço.
+**Achado durante o teste manual (testado no navegador desta vez)**: a primeira versão só tratava `isError`, não `isPending`. `useQuery` do TanStack tem retry automático (3 tentativas, backoff, ~7s até desistir) — nesse intervalo a query tá "pending", não "error", e a primeira versão deixava adicionar ao carrinho normalmente durante esse tempo, sem esperar. Corrigido adicionando `isPending` ao gate do botão. Sem esse ajuste, simular offline via DevTools mostrava o item sendo adicionado mesmo com adicional obrigatório configurado.
 
 ---
 
