@@ -14,7 +14,7 @@ import { useCustomer } from './useCustomer'
 
 const LABEL = 'font-body text-xs font-bold uppercase tracking-wide text-secondary'
 const INPUT =
-  'h-11 rounded-xl border border-secondary/15 bg-white px-3 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary'
+  'h-11 rounded-xl border border-secondary/15 bg-white px-3 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
 
 export function IdentificationPage() {
   const store = useCurrentStore()
@@ -68,7 +68,7 @@ export function IdentificationPage() {
           type="button"
           onClick={() => navigate(`/${store.slug}/carrinho`)}
           aria-label="Voltar pro carrinho"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ArrowLeft size={20} aria-hidden="true" />
         </button>
@@ -211,7 +211,7 @@ export function IdentificationPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="h-11 min-h-11 rounded-full bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
+          className="h-11 min-h-11 rounded-full bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
         >
           Confirmar
         </button>

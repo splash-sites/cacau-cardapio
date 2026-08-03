@@ -76,7 +76,7 @@ export function ReviewPage() {
           type="button"
           onClick={() => navigate(`/${store.slug}/identificacao`)}
           aria-label="Voltar"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ArrowLeft size={24} aria-hidden="true" />
         </button>
@@ -141,7 +141,7 @@ export function ReviewPage() {
         type="button"
         onClick={handleConfirm}
         disabled={status === 'submitting'}
-        className="h-11 min-h-11 rounded-md bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
+        className="h-11 min-h-11 rounded-md bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
       >
         {status === 'submitting' ? 'Confirmando…' : 'Confirmar pedido'}
       </button>

@@ -37,7 +37,7 @@ export function ProductCard({ product }: { product: Product }) {
         type="button"
         onClick={() => setDetailOpen(true)}
         aria-label={`Ver detalhes de ${product.name}`}
-        className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center self-start rounded-full bg-primary text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+        className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center self-start rounded-full bg-primary text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <Plus size={20} aria-hidden="true" />
       </button>

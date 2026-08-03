@@ -86,14 +86,14 @@ function CpfLookupForm({ onSubmit }: { onSubmit: (cpf: string) => void }) {
           type="text"
           inputMode="numeric"
           placeholder="000.000.000-00"
-          className="h-11 rounded-md border border-secondary/30 px-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="h-11 rounded-md border border-secondary/30 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           {...register('cpf', { validate: (value) => isValidCpf(value) || 'CPF inválido' })}
         />
         {errors.cpf && <span className="text-red-600">{errors.cpf.message}</span>}
       </label>
       <button
         type="submit"
-        className="h-11 min-h-11 rounded-md bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+        className="h-11 min-h-11 rounded-md bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         Ver meus pedidos
       </button>
@@ -130,7 +130,7 @@ export function OrdersPage() {
           type="button"
           onClick={() => navigate(`/${store.slug}/cardapio`)}
           aria-label="Voltar pro cardápio"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ArrowLeft size={20} aria-hidden="true" />
         </button>
@@ -149,7 +149,7 @@ export function OrdersPage() {
                 role="tab"
                 aria-selected={tab === option}
                 onClick={() => setTab(option)}
-                className={`h-11 min-h-11 flex-1 rounded-full font-body text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
+                className={`h-11 min-h-11 flex-1 rounded-full font-body text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   tab === option ? 'bg-primary text-primary-foreground' : 'text-secondary'
                 }`}
               >

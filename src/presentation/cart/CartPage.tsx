@@ -33,7 +33,7 @@ export function CartPage() {
           type="button"
           onClick={() => navigate(`/${store.slug}/cardapio`)}
           aria-label="Voltar pro cardápio"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ArrowLeft size={20} aria-hidden="true" />
         </button>
@@ -47,7 +47,7 @@ export function CartPage() {
             <button
               type="button"
               onClick={() => navigate(`/${store.slug}/cardapio`)}
-              className="flex h-11 min-h-11 items-center rounded-full bg-primary px-4 font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              className="flex h-11 min-h-11 items-center rounded-full bg-primary px-4 font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Ver cardápio {orderTypeLabel(orderType)}
             </button>
@@ -69,7 +69,7 @@ export function CartPage() {
                       type="button"
                       onClick={() => removeItem(id)}
                       aria-label={`Remover ${product.name} do carrinho`}
-                      className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center text-foreground/40 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                      className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center text-foreground/40 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       <X size={16} aria-hidden="true" />
                     </button>
@@ -101,7 +101,7 @@ export function CartPage() {
                               type="button"
                               onClick={() => decrementItem(id)}
                               aria-label={`Remover um ${product.name}`}
-                              className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                              className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                             >
                               −
                             </button>
@@ -110,7 +110,7 @@ export function CartPage() {
                               type="button"
                               onClick={() => incrementItem(id)}
                               aria-label={`Adicionar mais um ${product.name}`}
-                              className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                              className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                             >
                               +
                             </button>
@@ -127,7 +127,7 @@ export function CartPage() {
                       value={note ?? ''}
                       onChange={(e) => setNote(id, e.target.value)}
                       placeholder="Alguma observação? (ex: sem açúcar)"
-                      className="mt-3 h-11 w-full rounded-xl border border-secondary/15 bg-background px-3 font-body text-sm placeholder:text-foreground/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                      className="mt-3 h-11 w-full rounded-xl border border-secondary/15 bg-background px-3 font-body text-sm placeholder:text-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     />
                   </li>
                 )
@@ -145,7 +145,7 @@ export function CartPage() {
             <button
               type="button"
               onClick={() => navigate(`/${store.slug}/${nextStep}`)}
-              className="mt-4 h-11 min-h-11 w-full rounded-full bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              className="mt-4 h-11 min-h-11 w-full rounded-full bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Continuar
             </button>

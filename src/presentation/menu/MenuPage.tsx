@@ -34,7 +34,7 @@ export function MenuPage() {
             type="button"
             onClick={() => navigate(`/${store.slug}`)}
             aria-label="Voltar"
-            className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <ArrowLeft size={20} aria-hidden="true" />
           </button>
@@ -47,7 +47,7 @@ export function MenuPage() {
           type="button"
           onClick={() => navigate(`/${store.slug}/pedidos`)}
           aria-label="Meus pedidos"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center rounded-full bg-background/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center rounded-full bg-background/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ShoppingBag size={20} aria-hidden="true" />
         </button>
@@ -82,7 +82,7 @@ export function MenuPage() {
           <button
             type="button"
             onClick={() => navigate(`/${store.slug}/carrinho`)}
-            className="flex min-h-11 w-full items-center justify-between rounded-full bg-accent px-5 py-3 font-body text-accent-foreground shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex min-h-11 w-full items-center justify-between rounded-full bg-accent px-5 py-3 font-body text-accent-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span>{itemCount} {itemCount === 1 ? 'item' : 'itens'} · {formatPrice(cartTotal(items))}</span>
             <span className="font-medium">Ver carrinho ›</span>

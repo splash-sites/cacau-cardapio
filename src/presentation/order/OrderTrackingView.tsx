@@ -65,7 +65,7 @@ export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex h-11 min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                className="mt-3 flex h-11 min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <MessageCircle size={18} aria-hidden="true" />
                 Abrir WhatsApp
@@ -107,7 +107,7 @@ export function OrderTrackingView({ orderId, orderType, tableNumber, customerCpf
       <button
         type="button"
         onClick={handleNewOrder}
-        className="h-11 min-h-11 rounded-md bg-primary px-6 font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+        className="h-11 min-h-11 rounded-md bg-primary px-6 font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         Fazer novo pedido
       </button>

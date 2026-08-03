@@ -47,7 +47,7 @@ export function OrderTypeSelectionPage() {
             key={option.type}
             type="button"
             onClick={() => handleSelect(option.type)}
-            className="flex min-h-11 items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex min-h-11 items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-accent">
               {ICONS[option.type]}

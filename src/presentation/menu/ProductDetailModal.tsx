@@ -159,7 +159,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
               type="button"
               onClick={handleClose}
               aria-label="Fechar"
-              className="absolute right-3 top-3 flex h-9 w-9 min-h-9 items-center justify-center rounded-full bg-white/70 text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              className="absolute right-3 top-3 flex h-9 w-9 min-h-9 items-center justify-center rounded-full bg-white/70 text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <X size={18} aria-hidden="true" />
             </button>
@@ -205,7 +205,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Ex: sem açúcar, pouco gelo..."
                 rows={2}
-                className="w-full rounded-xl border border-secondary/15 bg-white px-3 py-2 font-body text-sm placeholder:text-foreground/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                className="w-full rounded-xl border border-secondary/15 bg-white px-3 py-2 font-body text-sm placeholder:text-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </label>
 
@@ -216,7 +216,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   aria-label="Diminuir quantidade"
-                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   −
                 </button>
@@ -225,7 +225,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
                   type="button"
                   onClick={() => setQuantity((q) => q + 1)}
                   aria-label="Aumentar quantidade"
-                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   +
                 </button>
@@ -254,7 +254,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
             type="button"
             onClick={handleAdd}
             disabled={!variationsComplete || optionsLoadError || optionsLoading}
-            className="h-11 min-h-11 w-full rounded-2xl bg-primary font-body font-medium text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
+            className="h-11 min-h-11 w-full rounded-2xl bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
           >
             Adicionar ao pedido
           </button>
@@ -295,7 +295,7 @@ function VariationGroupSection({
               role="radio"
               aria-checked={selected}
               onClick={() => onSelect(option.id)}
-              className="flex min-h-11 w-full items-center gap-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              className="flex min-h-11 w-full items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
@@ -353,7 +353,7 @@ function AddonGroupSection({
               aria-checked={selected}
               disabled={blocked}
               onClick={() => onChange(toggleAddonOption(selections, group, option.id))}
-              className="flex min-h-11 w-full items-center gap-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-40"
+              className="flex min-h-11 w-full items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
             >
               {group.selectionType === 'single' ? (
                 <span

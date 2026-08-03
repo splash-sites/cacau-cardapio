@@ -46,7 +46,7 @@ export function PromotionCarousel({ promotions, products }: { promotions: Promot
           setOpenProduct(product)
         }}
         aria-label={`Ver detalhes de ${product.name}`}
-        className="relative block h-40 w-full cursor-pointer overflow-hidden rounded-2xl text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        className="relative block h-40 w-full cursor-pointer overflow-hidden rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <img src={promotion.imageUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-accent/95 via-accent/70 to-transparent" aria-hidden="true" />
@@ -77,7 +77,7 @@ export function PromotionCarousel({ promotions, products }: { promotions: Promot
                     event.stopPropagation()
                     setIndex(slideIndex)
                   }}
-                  className="flex h-6 w-4 items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                  className="flex h-6 w-4 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <span
                     className={`h-1.5 rounded-full transition-all ${

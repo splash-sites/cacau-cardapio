@@ -47,7 +47,7 @@ export function ImageLightbox({ imageUrl, name, price, onClose }: ImageLightboxP
         type="button"
         onClick={handleClose}
         aria-label="Fechar"
-        className="absolute right-4 top-4 flex h-11 w-11 min-h-11 items-center justify-center rounded-full bg-black/50 text-2xl leading-none text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        className="absolute right-4 top-4 flex h-11 w-11 min-h-11 items-center justify-center rounded-full bg-black/50 text-2xl leading-none text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         ×
       </button>
