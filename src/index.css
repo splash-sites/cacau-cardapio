@@ -16,3 +16,10 @@
   --font-display: "Orelega One", serif;
   --font-body: "Inter", sans-serif;
 }
+
+/* iOS/WebKit dá zoom automático em input com font-size < 16px */
+input,
+select,
+textarea {
+  font-size: 16px;
+}

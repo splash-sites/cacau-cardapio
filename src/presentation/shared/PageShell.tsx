@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 export function PageShell({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div className="flex min-h-screen justify-center bg-background">
-      <div className={`w-full max-w-sm ${className}`}>{children}</div>
+      <div className={`w-full sm:max-w-sm ${className}`}>{children}</div>
     </div>
   )
 }
