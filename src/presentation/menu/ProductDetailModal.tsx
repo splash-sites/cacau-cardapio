@@ -147,22 +147,14 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
         <div className="flex-1 overflow-y-auto overscroll-contain">
           <div className="relative aspect-square w-full shrink-0 bg-secondary/10">
             {product.imageUrl && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setLightboxOpen(true)}
-                  aria-label={`Ver imagem ampliada de ${product.name}`}
-                  className="block h-full w-full cursor-pointer"
-                >
-                  <img src={product.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-                </button>
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs"
-                >
-                  🔍
-                </span>
-              </>
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                aria-label={`Ver imagem ampliada de ${product.name}`}
+                className="block h-full w-full cursor-pointer"
+              >
+                <img src={product.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+              </button>
             )}
             <button
               type="button"
