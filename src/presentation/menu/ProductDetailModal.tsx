@@ -168,7 +168,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
               type="button"
               onClick={handleClose}
               aria-label="Fechar"
-              className="absolute right-3 top-3 flex h-9 w-9 min-h-9 items-center justify-center rounded-full bg-white/70 text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="absolute right-2 top-2 z-10 flex h-11 w-11 min-h-11 items-center justify-center rounded-full bg-white/70 text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <X size={18} aria-hidden="true" />
             </button>
