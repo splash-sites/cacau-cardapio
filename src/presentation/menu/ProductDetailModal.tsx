@@ -56,19 +56,10 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
   }, [])
 
   useEffect(() => {
-    const scrollY = window.scrollY
-    const body = document.body
-    const original = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right }
-    body.style.position = 'fixed'
-    body.style.top = `-${scrollY}px`
-    body.style.left = '0'
-    body.style.right = '0'
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     return () => {
-      body.style.position = original.position
-      body.style.top = original.top
-      body.style.left = original.left
-      body.style.right = original.right
-      window.scrollTo(0, scrollY)
+      document.body.style.overflow = original
     }
   }, [])
 
