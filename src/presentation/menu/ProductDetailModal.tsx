@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Check, X } from 'lucide-react'
 import type { AddonGroup } from '../../domain/addon/AddonGroup'
 import {
@@ -55,6 +56,23 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
   }, [])
 
   useEffect(() => {
+    const scrollY = window.scrollY
+    const body = document.body
+    const original = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right }
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    return () => {
+      body.style.position = original.position
+      body.style.top = original.top
+      body.style.left = original.left
+      body.style.right = original.right
+      window.scrollTo(0, scrollY)
+    }
+  }, [])
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Escape') return
       if (lightboxOpen) return
@@ -106,7 +124,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
   const loverTotal = (baseLover + addonsLoverTotal) * quantity
   const regularTotal = (baseRegular + addonsTotal) * quantity
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center" role="presentation">
       <div
         onClick={handleClose}
@@ -122,7 +140,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           transitionDuration: `${TRANSITION_MS}ms`,
           transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
         }}
-        className={`relative z-10 flex max-h-[88vh] w-full max-w-sm flex-col overflow-hidden rounded-t-[20px] bg-background shadow-xl ease-out ${
+        className={`relative z-10 flex max-h-[88vh] w-full sm:max-w-sm flex-col overflow-hidden rounded-t-[20px] bg-background shadow-xl ease-out ${
           dragging ? '' : 'transition-transform motion-reduce:transition-none'
         }`}
       >
@@ -269,7 +287,8 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           onClose={() => setLightboxOpen(false)}
         />
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }
 
