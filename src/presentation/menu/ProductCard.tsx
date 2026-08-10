@@ -8,7 +8,7 @@ export function ProductCard({ product }: { product: Product }) {
   const [detailOpen, setDetailOpen] = useState(false)
 
   return (
-    <li className="flex items-center gap-4 rounded-2xl bg-white p-3 shadow-sm">
+    <article className="flex items-center gap-4 rounded-2xl bg-white p-3 shadow-sm">
       <div className="h-[78px] w-[78px] shrink-0 overflow-hidden rounded-xl bg-secondary/10">
         {product.imageUrl && (
           <img
@@ -43,6 +43,6 @@ export function ProductCard({ product }: { product: Product }) {
       </button>
 
       {detailOpen && <ProductDetailModal product={product} onClose={() => setDetailOpen(false)} />}
-    </li>
+    </article>
   )
 }

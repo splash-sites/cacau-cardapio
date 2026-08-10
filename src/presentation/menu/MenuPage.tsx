@@ -1,6 +1,9 @@
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
+import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { cartItemCount, cartTotal } from '../../domain/cart/Cart'
+import type { Product } from '../../domain/menu/Product'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
@@ -13,6 +16,19 @@ import { formatPrice } from './formatPrice'
 import { useMenu } from './useMenu'
 import { usePromotions } from './usePromotions'
 
+type MenuRow = { type: 'category'; category: string } | { type: 'product'; product: Product }
+
+function buildRows(groups: Map<string, Product[]>): MenuRow[] {
+  const rows: MenuRow[] = []
+  for (const [category, products] of groups.entries()) {
+    rows.push({ type: 'category', category })
+    for (const product of products) {
+      rows.push({ type: 'product', product })
+    }
+  }
+  return rows
+}
+
 export function MenuPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
@@ -21,6 +37,22 @@ export function MenuPage() {
 
   const { data: groups, isLoading, isError } = useMenu(store.id, orderType)
   const { data: promotions } = usePromotions(store.id)
+
+  const rows = useMemo(() => (groups ? buildRows(groups) : []), [groups])
+
+  const listRef = useRef<HTMLDivElement>(null)
+  const listOffsetRef = useRef(0)
+
+  useLayoutEffect(() => {
+    listOffsetRef.current = listRef.current?.offsetTop ?? 0
+  })
+
+  const rowVirtualizer = useWindowVirtualizer({
+    count: rows.length,
+    estimateSize: (index) => (rows[index]?.type === 'category' ? 36 : 128),
+    overscan: 8,
+    scrollMargin: listOffsetRef.current,
+  })
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
 
@@ -64,17 +96,37 @@ export function MenuPage() {
           <p className="font-body text-foreground/70">Nenhum item disponível no momento.</p>
         )}
 
-        {groups &&
-          [...groups.entries()].map(([category, products]) => (
-            <section key={category} className="mb-6">
-              <h2 className="mb-2 font-body text-sm font-bold uppercase tracking-wide text-primary">{category}</h2>
-              <ul className="flex flex-col gap-3">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </ul>
-            </section>
-          ))}
+        {groups && groups.size > 0 && (
+          <div ref={listRef} style={{ position: 'relative', height: rowVirtualizer.getTotalSize() }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const row = rows[virtualRow.index]
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start - rowVirtualizer.options.scrollMargin}px)`,
+                  }}
+                >
+                  {row.type === 'category' ? (
+                    <h2 className="mb-2 mt-6 font-body text-sm font-bold uppercase tracking-wide text-primary first:mt-0">
+                      {row.category}
+                    </h2>
+                  ) : (
+                    <div className="pb-3">
+                      <ProductCard product={row.product} />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {itemCount > 0 && (
