@@ -131,9 +131,28 @@ Cada subdomínio aponta direto pro respectivo projeto Vercel, sem proxy/rewrite 
 O domínio em si pode ser comprado a qualquer momento, sem depender desse passo — só o apontamento do CNAME que precisa esperar o primeiro deploy.
 
 ## Fases do projeto
-**Fase 1 (agora):** 2 repositórios (`admin`, `storefront`), 1 projeto Supabase hospedado compartilhado entre os dois. Sem PR obrigatório, sem CI, sem staging separado. Push quando quiser sincronizar, git local o resto do tempo. Mudança de schema é feita direto no SQL Editor do Supabase Studio, por enquanto sem migration versionada — formaliza isso na Fase 2.
+**Fase 1 (agora):** 2 repositórios (`admin`, `storefront`), 1 projeto Supabase hospedado compartilhado entre os dois. Sem PR obrigatório, sem CI, sem staging separado — ver "Fluxo de versionamento (Git)" abaixo pro esquema de branch. Mudança de schema é feita direto no SQL Editor do Supabase Studio, por enquanto sem migration versionada — formaliza isso na Fase 2.
 
-**Fase 2 — unificação (ao bater o Marco 1 abaixo):** os dois repositórios se juntam num monorepo (Turborepo + pnpm workspaces), as mudanças de schema passam a ser migrations versionadas (`supabase/migrations`), e entra staging (projeto Supabase separado), CI e PR obrigatório.
+**Fase 2 — unificação (ao bater o Marco 1 abaixo):** os dois repositórios se juntam num monorepo (Turborepo + pnpm workspaces), as mudanças de schema passam a ser migrations versionadas (`supabase/migrations`), e entra staging (projeto Supabase separado ou branch persistente do Supabase Branching), CI e PR obrigatório.
+
+## Fluxo de versionamento (Git)
+Clientes já usam a produção — ninguém desenvolve mais direto na `main`. GitFlow simplificado (mesmo esquema usado no repositório `admin`, pra manter os dois consistentes): sem `feature/*` nem `release/*`, só o núcleo que importa aqui — separação teste/produção e hotfix com merge duplo.
+
+- **`main`** → produção. Só recebe merge no momento de soltar uma versão.
+- **`dev`** → trabalho do dia a dia. Commit e push direto aqui. Cada push gera um Preview Deployment próprio na Vercel (`cacau-cardapio-git-dev-....vercel.app`) — é o ambiente de teste, produção não é tocada.
+- **Soltar versão pros clientes:**
+  ```bash
+  git checkout main
+  git merge dev
+  git tag v1.x.y
+  git push origin main --tags
+  git checkout dev
+  ```
+- **Bug urgente em produção:** branch a partir de `main`, corrige, merge em `main` (deploy sai na hora) **e** em `dev` — senão a correção some no próximo release.
+
+**Banco compartilhado, sem isolamento ainda**: o Supabase é o mesmo projeto pra `dev` e produção (ver "Repositórios do projeto" acima) — nenhuma branch de código protege o banco. Enquanto não existir staging separado (Fase 2): só mudança aditiva no schema (coluna nova sempre opcional/com default), nunca renomear/remover coluna nem alterar política de RLS que o código em produção usa sem avisar quem mantém o `admin` antes. Mudança de schema/RLS: preferir testar primeiro num Supabase local (`supabase start`, via Docker) antes de aplicar no projeto compartilhado, mesmo sem migration versionada ainda.
+
+Configuração necessária na Vercel (Settings → Environment Variables, deste projeto): `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` marcadas também pro ambiente **Preview**, não só **Production** — sem isso o Preview Deployment da `dev` quebra (variável ausente).
 
 ## Stack técnica
 - React 18 + Vite, TypeScript em modo `strict`
