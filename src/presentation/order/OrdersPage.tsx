@@ -19,7 +19,8 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   received: 'Recebido',
   preparing: 'Em preparo',
   out_for_delivery: 'Saiu pra entrega',
-  finalized: 'Entregue',
+  delivered: 'Entregue',
+  finalized: 'Finalizado',
   cancelled: 'Cancelado',
 }
 
@@ -27,12 +28,14 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   received: 'bg-amber-100 text-amber-800',
   preparing: 'bg-amber-100 text-amber-800',
   out_for_delivery: 'bg-blue-100 text-blue-800',
+  delivered: 'bg-blue-100 text-blue-800',
   finalized: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
 }
 
 function statusLabel(order: OrderSummary): string {
   if (order.status === 'out_for_delivery' && order.orderType === 'pickup') return 'Pronto pra retirada'
+  if (order.status === 'delivered' && order.orderType === 'pickup') return 'Retirado'
   return STATUS_LABEL[order.status]
 }
 

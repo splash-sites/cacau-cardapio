@@ -174,7 +174,7 @@ Tokens de marca (já embutidos no `@theme` do `src/index.css`, ver "Setup inicia
 
 **Cores de status do pedido** (na tela de acompanhamento do cliente) seguem a mesma convenção do admin — paleta funcional do Tailwind, não a de marca:
 - `received` / `preparing` → âmbar (`amber-500`)
-- `out_for_delivery` → azul (`blue-500`)
+- `out_for_delivery` / `delivered` → azul (`blue-500`)
 - `finalized` → verde (`green-500`)
 - `cancelled` → vermelho (`red-500`)
 
@@ -321,12 +321,14 @@ presentation/     → componentes React, hooks, páginas
 - **D**: `presentation` depende de abstrações de `application`, nunca importa o client Supabase direto num componente.
 
 ## Fluxo de status do pedido
-5 valores possíveis na coluna `status` (CHECK constraint no banco, confirmado com quem mantém o `admin`): `received`, `preparing`, `out_for_delivery`, `finalized`, `cancelled`. Pedido nasce direto como `received` (sem estado `pending` — tirado de propósito, confirmação do cliente já é o pedido chegando pra loja).
+6 valores possíveis na coluna `status` (CHECK constraint no banco, confirmado com quem mantém o `admin`): `received`, `preparing`, `out_for_delivery`, `delivered`, `finalized`, `cancelled`. Pedido nasce direto como `received` (sem estado `pending` — tirado de propósito, confirmação do cliente já é o pedido chegando pra loja).
 
-Comum a todos os tipos: `received` → `preparing` → `finalized`.
-- **`dine_in`**: sem etapa `out_for_delivery` — vai direto de `preparing` pra `finalized`.
-- **`pickup`**: passa por `out_for_delivery` entre `preparing` e `finalized` — só que o painel exibe o rótulo **"Pronto pra retirada"** pra esse mesmo valor (é o mesmo status de delivery por trás, rótulo muda pelo `order_type`, não o dado).
-- **`delivery`**: passa por `out_for_delivery` (rótulo **"Saiu pra entrega"**) entre `preparing` e `finalized`.
+`delivered` e `finalized` são dois passos distintos, nessa ordem: `delivered` marca a entrega física (comida na mesa, pedido retirado no balcão, ou entregue no endereço); `finalized` é o fechamento manual da comanda pelo lojista no painel (evento administrativo, não físico) — os dois nunca são o mesmo clique do admin.
+
+Comum a todos os tipos: `received` → `preparing` → `delivered` → `finalized`.
+- **`dine_in`**: sem etapa `out_for_delivery` — vai direto de `preparing` pra `delivered` (comida entregue na mesa).
+- **`pickup`**: passa por `out_for_delivery` entre `preparing` e `delivered` — só que o painel exibe o rótulo **"Pronto pra retirada"** pra esse mesmo valor (é o mesmo status de delivery por trás, rótulo muda pelo `order_type`, não o dado); `delivered` aqui é rotulado **"Retirado"**.
+- **`delivery`**: passa por `out_for_delivery` (rótulo **"Saiu pra entrega"**) entre `preparing` e `delivered` (rótulo **"Entregue"**, endereço do cliente).
 
 `cancelled` só a partir de `received` (não dá pra cancelar depois que entrou em preparo). O cliente só acompanha essa máquina de estados em tempo real — não pode alterá-la diretamente; quem muda status é o `admin`.
 
