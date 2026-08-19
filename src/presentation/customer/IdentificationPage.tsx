@@ -19,6 +19,7 @@ const INPUT =
 export function IdentificationPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
+  const tableNumber = useOrderType((state) => state.tableNumber)
   const setTableNumber = useOrderType((state) => state.setTableNumber)
   const items = useCart((state) => state.items)
   const customer = useCustomer((state) => state.customer)
@@ -37,6 +38,9 @@ export function IdentificationPage() {
       fullName: customer?.fullName ?? '',
       cpf: customer?.cpf ? maskCpf(customer.cpf) : '',
       phone: customer?.phone ? maskPhone(customer.phone) : '',
+      // vem preenchido quando o cliente entrou via QR code da mesa (TableEntryPage);
+      // continua editável — cliente pode corrigir se o QR leu errado.
+      tableNumber: tableNumber ?? '',
     },
   })
 

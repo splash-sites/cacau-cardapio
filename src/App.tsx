@@ -5,6 +5,9 @@ import { StoreLayout } from './presentation/store/StoreLayout'
 const OrderTypeSelectionPage = lazy(() =>
   import('./presentation/order/OrderTypeSelectionPage').then((m) => ({ default: m.OrderTypeSelectionPage })),
 )
+const TableEntryPage = lazy(() =>
+  import('./presentation/order/TableEntryPage').then((m) => ({ default: m.TableEntryPage })),
+)
 const MenuPage = lazy(() => import('./presentation/menu/MenuPage').then((m) => ({ default: m.MenuPage })))
 const CartPage = lazy(() => import('./presentation/cart/CartPage').then((m) => ({ default: m.CartPage })))
 const IdentificationPage = lazy(() =>
@@ -35,6 +38,7 @@ function App() {
         />
         <Route path="/:storeSlug" element={<StoreLayout />}>
           <Route index element={<OrderTypeSelectionPage />} />
+          <Route path="mesa/:numeroMesa" element={<TableEntryPage />} />
           <Route path="cardapio" element={<MenuPage />} />
           <Route path="carrinho" element={<CartPage />} />
           <Route path="identificacao" element={<IdentificationPage />} />
