@@ -31,17 +31,31 @@ export function OrderTypeSelectionPage() {
     })
   }
 
-  if (store.supportsPickup || store.supportsDelivery) {
-    // pickup e delivery viraram uma escolha só nessa tela — a diferença real
-    // (retirar x receber, com endereço) é perguntada no checkout
-    // (IdentificationPage). orderType aqui é só o catálogo usado durante a
-    // navegação (available_pickup); se a loja não aceitar pickup, usa
-    // available_delivery e o checkout nem pergunta de novo (só um modo possível).
+  if (store.supportsPickup && store.supportsDelivery) {
+    // Loja aceita os dois — pickup e delivery viram uma escolha só nessa tela.
+    // A diferença real (retirar x receber, com endereço) é perguntada no
+    // checkout (IdentificationPage), não aqui.
     options.push({
       key: 'pickup_delivery',
-      orderType: store.supportsPickup ? 'pickup' : 'delivery',
+      orderType: 'pickup',
       label: 'Para Levar/Entrega',
       description: 'Retire no balcão ou receba no seu endereço',
+      icon: <ShoppingBag size={20} aria-hidden="true" />,
+    })
+  } else if (store.supportsPickup) {
+    options.push({
+      key: 'pickup',
+      orderType: 'pickup',
+      label: 'Para Levar',
+      description: 'Vou retirar no balcão',
+      icon: <ShoppingBag size={20} aria-hidden="true" />,
+    })
+  } else if (store.supportsDelivery) {
+    options.push({
+      key: 'delivery',
+      orderType: 'delivery',
+      label: 'Entrega',
+      description: 'Quero receber no meu endereço',
       icon: <ShoppingBag size={20} aria-hidden="true" />,
     })
   }
