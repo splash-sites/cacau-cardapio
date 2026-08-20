@@ -30,13 +30,22 @@ describe('identificationSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('delivery exige endereço', () => {
-    expect(identificationSchema('delivery').safeParse(baseInput).success).toBe(false)
+  it('wantsDelivery exige endereço', () => {
+    const result = identificationSchema('pickup').safeParse({ ...baseInput, wantsDelivery: true })
+    expect(result.success).toBe(false)
   })
 
-  it('delivery aceita com endereço', () => {
-    const result = identificationSchema('delivery').safeParse({ ...baseInput, address: validAddress })
+  it('wantsDelivery aceita com endereço', () => {
+    const result = identificationSchema('pickup').safeParse({ ...baseInput, wantsDelivery: true, address: validAddress })
     expect(result.success).toBe(true)
+  })
+
+  it('orderType delivery (loja sem pickup) sem wantsDelivery marcado ainda exige endereço via wantsDelivery default do form', () => {
+    // identificationSchema não força mais endereço só por orderType==='delivery' — quem decide é
+    // wantsDelivery. IdentificationPage seta defaultValues.wantsDelivery = (orderType === 'delivery')
+    // pra cobrir a loja só-delivery, então esse caso sempre chega ao schema com wantsDelivery true.
+    const result = identificationSchema('delivery').safeParse({ ...baseInput, wantsDelivery: true })
+    expect(result.success).toBe(false)
   })
 
   it('rejeita CPF inválido', () => {

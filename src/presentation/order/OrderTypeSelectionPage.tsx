@@ -1,22 +1,17 @@
 import type { ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Coffee, ShoppingBag, Truck } from 'lucide-react'
-import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
+import { Coffee, ShoppingBag } from 'lucide-react'
 import type { OrderType } from '../../domain/order/OrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { PageShell } from '../shared/PageShell'
 import { useOrderType } from './useOrderType'
 
-const OPTIONS: { type: OrderType; description: string }[] = [
-  { type: 'dine_in', description: 'Vou consumir no local' },
-  { type: 'pickup', description: 'Vou retirar no balcão' },
-  { type: 'delivery', description: 'Quero receber no meu endereço' },
-]
-
-const ICONS: Record<OrderType, ReactElement> = {
-  dine_in: <Coffee size={20} aria-hidden="true" />,
-  pickup: <ShoppingBag size={20} aria-hidden="true" />,
-  delivery: <Truck size={20} aria-hidden="true" />,
+interface OrderTypeOption {
+  key: string
+  orderType: OrderType
+  label: string
+  description: string
+  icon: ReactElement
 }
 
 export function OrderTypeSelectionPage() {
@@ -24,14 +19,35 @@ export function OrderTypeSelectionPage() {
   const setOrderType = useOrderType((state) => state.setOrderType)
   const navigate = useNavigate()
 
-  const availableOptions = OPTIONS.filter((option) => {
-    if (option.type === 'dine_in') return store.supportsDineIn
-    if (option.type === 'pickup') return store.supportsPickup
-    return store.supportsDelivery
-  })
+  const options: OrderTypeOption[] = []
 
-  const handleSelect = (type: OrderType) => {
-    setOrderType(type)
+  if (store.supportsDineIn) {
+    options.push({
+      key: 'dine_in',
+      orderType: 'dine_in',
+      label: 'Cafeteria',
+      description: 'Vou consumir no local',
+      icon: <Coffee size={20} aria-hidden="true" />,
+    })
+  }
+
+  if (store.supportsPickup || store.supportsDelivery) {
+    // pickup e delivery viraram uma escolha só nessa tela — a diferença real
+    // (retirar x receber, com endereço) é perguntada no checkout
+    // (IdentificationPage). orderType aqui é só o catálogo usado durante a
+    // navegação (available_pickup); se a loja não aceitar pickup, usa
+    // available_delivery e o checkout nem pergunta de novo (só um modo possível).
+    options.push({
+      key: 'pickup_delivery',
+      orderType: store.supportsPickup ? 'pickup' : 'delivery',
+      label: 'Para Levar/Entrega',
+      description: 'Retire no balcão ou receba no seu endereço',
+      icon: <ShoppingBag size={20} aria-hidden="true" />,
+    })
+  }
+
+  const handleSelect = (orderType: OrderType) => {
+    setOrderType(orderType)
     navigate(`/${store.slug}/cardapio`)
   }
 
@@ -42,18 +58,18 @@ export function OrderTypeSelectionPage() {
         <p className="mt-1 font-body text-sm text-foreground/60">Como você quer pedir hoje?</p>
       </div>
       <div className="flex flex-col gap-3">
-        {availableOptions.map((option) => (
+        {options.map((option) => (
           <button
-            key={option.type}
+            key={option.key}
             type="button"
-            onClick={() => handleSelect(option.type)}
+            onClick={() => handleSelect(option.orderType)}
             className="flex min-h-11 items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-accent">
-              {ICONS[option.type]}
+              {option.icon}
             </span>
             <span className="flex flex-col">
-              <span className="font-display text-lg text-accent">{orderTypeLabel(option.type)}</span>
+              <span className="font-display text-lg text-accent">{option.label}</span>
               <span className="font-body text-sm text-foreground/60">{option.description}</span>
             </span>
           </button>

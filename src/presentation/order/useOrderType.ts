@@ -16,9 +16,16 @@ export const useOrderType = create<OrderTypeState>((set, get) => ({
   tableNumber: null,
   setOrderType: (orderType) => {
     // Cada tipo de pedido tem seu próprio catálogo (available_dine_in/pickup/delivery) —
-    // trocar de tipo com itens de outro catálogo no carrinho geraria pedido com produto indisponível.
+    // trocar de tipo com itens de outro catálogo geraria pedido com produto indisponível.
+    // Exceção: pickup <-> delivery não limpa. Viraram uma escolha só feita no checkout
+    // (IdentificationPage) — o catálogo inteiro é navegado sob 'pickup' até ali, então o
+    // carrinho já é sempre consistente com available_pickup; só o rótulo final muda.
     const previousOrderType = get().orderType
-    if (previousOrderType !== null && previousOrderType !== orderType) useCart.getState().clear()
+    const catalogChanged =
+      previousOrderType !== null &&
+      previousOrderType !== orderType &&
+      (previousOrderType === 'dine_in' || orderType === 'dine_in')
+    if (catalogChanged) useCart.getState().clear()
     set({ orderType })
   },
   setTableNumber: (tableNumber) => set({ tableNumber }),

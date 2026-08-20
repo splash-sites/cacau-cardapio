@@ -19,16 +19,21 @@ const identificationObjectSchema = z.object({
   phone: z.string().regex(/^\(?\d{2}\)?\s?9?\s?\d{4}-?\d{4}$/, 'Telefone inválido'),
   address: addressSchema.optional(),
   tableNumber: z.string().optional(),
+  // pickup/delivery viraram uma escolha só, feita aqui no checkout (não mais na
+  // tela de tipo de pedido) — este campo carrega essa escolha.
+  wantsDelivery: z.boolean().optional(),
 })
 
 export type IdentificationInput = z.infer<typeof identificationObjectSchema>
 
-// Endereço só é obrigatório quando orderType === 'delivery', mesa só quando
-// orderType === 'dine_in' — já sabido antes dessa tela (escolhido na tela de
-// tipo de pedido), não é pergunta de novo ao cliente.
+// Endereço só é obrigatório quando o cliente marca "receber" no toggle de
+// retirada/entrega (wantsDelivery, ver IdentificationPage) — não depende mais
+// do orderType de entrada, que agora só chega como 'pickup' (placeholder do
+// fluxo unificado) ou 'delivery' (loja sem suporte a pickup, toggle nem
+// aparece). Mesa só quando orderType === 'dine_in', isso não mudou.
 export function identificationSchema(orderType: OrderType) {
   return identificationObjectSchema.superRefine((data, ctx) => {
-    if (orderType === 'delivery' && !data.address) {
+    if (data.wantsDelivery && !data.address) {
       ctx.addIssue({ code: 'custom', path: ['address'], message: 'Endereço obrigatório para entrega' })
     }
     if (orderType === 'dine_in' && !data.tableNumber) {

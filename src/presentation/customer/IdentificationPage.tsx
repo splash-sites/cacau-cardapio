@@ -20,15 +20,23 @@ export function IdentificationPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
   const tableNumber = useOrderType((state) => state.tableNumber)
+  const setOrderType = useOrderType((state) => state.setOrderType)
   const setTableNumber = useOrderType((state) => state.setTableNumber)
   const items = useCart((state) => state.items)
   const customer = useCustomer((state) => state.customer)
   const setCustomer = useCustomer((state) => state.setCustomer)
   const navigate = useNavigate()
 
+  // pickup e delivery viraram uma escolha só, feita aqui (não mais na tela de tipo
+  // de pedido) — só mostra o toggle se a loja aceitar os dois. Se só aceitar um,
+  // orderType já chega resolvido (OrderTypeSelectionPage) e não pergunta de novo.
+  const showFulfillmentToggle = orderType !== 'dine_in' && store.supportsPickup && store.supportsDelivery
+
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<IdentificationInput>({
     resolver: zodResolver(identificationSchema(orderType ?? 'pickup')),
@@ -41,15 +49,19 @@ export function IdentificationPage() {
       // vem preenchido quando o cliente entrou via QR code da mesa (TableEntryPage);
       // continua editável — cliente pode corrigir se o QR leu errado.
       tableNumber: tableNumber ?? '',
+      // orderType só chega 'delivery' quando a loja não aceita pickup (toggle
+      // nem aparece nesse caso) — cobre a entrega forçada sem pedir de novo.
+      wantsDelivery: orderType === 'delivery',
     },
   })
 
   const { onChange: onCpfChange, ...cpfField } = register('cpf')
   const { onChange: onPhoneChange, ...phoneField } = register('phone')
-  // Só registra quando o campo existe de fato (delivery) — registrar incondicionalmente
-  // faz o RHF criar `address` mesmo em dine_in/pickup, e o Zod para de tratá-lo como
+  const wantsDelivery = watch('wantsDelivery')
+  // Só registra quando o campo existe de fato — registrar incondicionalmente faz o
+  // RHF criar `address` mesmo sem entrega escolhida, e o Zod para de tratá-lo como
   // opcional (undefined), validando os outros campos obrigatórios do endereço à toa.
-  const zipCodeField = orderType === 'delivery' ? register('address.zipCode') : null
+  const zipCodeField = wantsDelivery ? register('address.zipCode') : null
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
   if (items.length === 0) return <Navigate to={`/${store.slug}/cardapio`} replace />
@@ -62,6 +74,9 @@ export function IdentificationPage() {
       address: input.address ?? null,
     })
     if (input.tableNumber) setTableNumber(input.tableNumber)
+    if (orderType === 'pickup' || orderType === 'delivery') {
+      setOrderType(input.wantsDelivery ? 'delivery' : 'pickup')
+    }
     navigate(`/${store.slug}/revisao`)
   }
 
@@ -141,7 +156,37 @@ export function IdentificationPage() {
           </label>
         )}
 
-        {orderType === 'delivery' && (
+        {showFulfillmentToggle && (
+          <div className={`flex flex-col gap-1 ${LABEL}`}>
+            Retirar ou receber?
+            <div className="flex gap-2 rounded-full bg-secondary/10 p-1" role="radiogroup" aria-label="Retirar ou receber">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={!wantsDelivery}
+                onClick={() => setValue('wantsDelivery', false)}
+                className={`h-11 min-h-11 flex-1 rounded-full font-body text-sm font-medium normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  !wantsDelivery ? 'bg-primary text-primary-foreground' : 'text-secondary'
+                }`}
+              >
+                Retirar no balcão
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={!!wantsDelivery}
+                onClick={() => setValue('wantsDelivery', true)}
+                className={`h-11 min-h-11 flex-1 rounded-full font-body text-sm font-medium normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  wantsDelivery ? 'bg-primary text-primary-foreground' : 'text-secondary'
+                }`}
+              >
+                Receber em casa
+              </button>
+            </div>
+          </div>
+        )}
+
+        {wantsDelivery && (
           <fieldset className="flex min-w-0 flex-col gap-4 rounded-xl border border-secondary/15 bg-white/40 p-3">
             <legend className="px-1 font-body text-xs font-bold uppercase tracking-wide text-secondary">
               Endereço de entrega

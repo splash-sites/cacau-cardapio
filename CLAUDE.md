@@ -336,10 +336,10 @@ Comum a todos os tipos: `received` → `preparing` → `delivered` → `finalize
 App **mobile-first** onde o cliente navega o cardápio e faz o pedido — local (mesa via QR code), retirada ou delivery. Lojas com `reseller_enabled = true` também têm uma vitrine separada de atacado em `/:storeSlug/atacado` (ver "Canal de revendedor" acima).
 
 1. **Entrada via mesa (QR code)**: rota `/:storeSlug/mesa/:numeroMesa` (`TableEntryPage`) — pré-seleciona `dine_in` e o número da mesa (`useOrderType`), pula a tela de escolha abaixo e vai direto pro cardápio. Se a loja não aceitar `dine_in` ou o número vier vazio, cai na tela de escolha normal em vez de forçar mesa inválida.
-2. **Escolha do tipo de pedido**: tela de 3 cards — "Cafeteria" (`dine_in`), "Delivery" (`delivery`), "Para Levar" (`pickup`) — se não veio de QR code. Vem **antes** do cardápio, não depois: cada produto tem disponibilidade por canal (`available_dine_in`/`available_pickup`/`available_delivery`), então o cardápio só sabe o que mostrar depois de saber o tipo.
+2. **Escolha do tipo de pedido**: tela de **2 cards** — "Cafeteria" (`dine_in`) e "Para Levar/Entrega" (`pickup`/`delivery` fundidos numa escolha só) — se não veio de QR code. Vem **antes** do cardápio, não depois: cada produto tem disponibilidade por canal, então o cardápio só sabe o que mostrar depois de saber o tipo. `pickup` e `delivery` deixaram de ser uma escolha nessa tela (decisão de produto, 2026-08-20): o card "Para Levar/Entrega" sempre navega com `orderType = 'pickup'` (ou `'delivery'` se a loja não aceitar `pickup` — caso raro), e o cardápio inteiro é filtrado por `available_pickup` durante a navegação, **não** por `available_delivery` — a distinção pickup×delivery virou só o rótulo final e endereço/RPC, não filtro de catálogo.
 3. **Cardápio**: por categoria, filtrado pelo tipo escolhido; item sem estoque ou indisponível nesse canal aparece desabilitado/oculto, em tempo real. Botão de adicionar em cada item.
 4. **Carrinho e checkout**: sem pagamento processado no sistema — combinado na entrega/retirada/mesa.
-5. **Identificação do cliente**: nome, CPF e telefone (ver "Identificação do cliente (sem conta)" abaixo) — pedida junto do checkout, não antes. Endereço entra aqui também se tipo = delivery.
+5. **Identificação do cliente**: nome, CPF e telefone (ver "Identificação do cliente (sem conta)" abaixo) — pedida junto do checkout, não antes. Se `orderType` chegou como `pickup`/`delivery` (não `dine_in`) e a loja aceita os dois, aparece aqui um toggle "Retirar no balcão" / "Receber em casa" (`IdentificationPage`, campo `wantsDelivery`) — é aqui, não na tela de tipo de pedido, que o cliente realmente escolhe entre retirada e entrega. Endereço só é pedido (e obrigatório) se escolher "Receber em casa"; ao confirmar, `orderType` global é resolvido pro valor final (`pickup` ou `delivery`) antes de seguir pra revisão — dali em diante (RPC `confirm_order`, rótulos de status, aviso por WhatsApp) tudo funciona igual a antes, sem saber que a escolha migrou de tela. Se a loja só aceitar um dos dois modos, o toggle nem aparece (`orderType` já chega resolvido desde a tela de tipo de pedido).
 6. **Confirmação do pedido**.
 7. **Acompanhamento em tempo real**: status muda ao vivo, seguindo a máquina de estados acima. Cliente recupera "meus pedidos" digitando o mesmo CPF de novo, em qualquer aparelho.
 
@@ -365,9 +365,9 @@ Login/sessão com Supabase Auth (JWT) **continua existindo só pro lado lojista/
 ## Etapas de desenvolvimento
 Este app depende de dado que só existe depois de algumas coisas prontas no `admin` — não dá pra testar cardápio de verdade sem loja/produto cadastrado:
 1. **Confirmar dado de teste** — pelo menos 1 loja e alguns produtos já cadastrados no banco compartilhado (pode ser via SQL Editor direto, enquanto o CRUD de produto no `admin` não está pronto)
-2. **Escolha de tipo de pedido** (tela de 3 cards) + **navegação do cardápio** filtrado por tipo (lendo de `public_products`) — pública, sem identificação
+2. **Escolha de tipo de pedido** (tela de 2 cards — Cafeteria / Para Levar+Entrega fundidos) + **navegação do cardápio** filtrado por tipo (lendo de `public_products`) — pública, sem identificação
 3. **Carrinho** — adicionar/remover item, ajustar quantidade
-4. **Identificação do cliente** (nome/CPF/telefone, endereço se delivery) — parte do checkout, ver "Identificação do cliente (sem conta)"
+4. **Identificação do cliente** (nome/CPF/telefone; toggle retirar/receber + endereço se escolher entrega) — parte do checkout, ver "Identificação do cliente (sem conta)"
 5. **Confirmação do pedido**
 6. **Acompanhamento de status em tempo real** — só faz sentido testar de ponta a ponta depois que o dashboard do `admin` também está mudando status
 

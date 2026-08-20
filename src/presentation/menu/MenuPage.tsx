@@ -4,7 +4,7 @@ import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { cartItemCount, cartTotal } from '../../domain/cart/Cart'
 import type { Product } from '../../domain/menu/Product'
-import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
+import { browsingOrderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
@@ -71,7 +71,7 @@ export function MenuPage() {
             <ArrowLeft size={20} aria-hidden="true" />
           </button>
           <div>
-            <h1 className="font-display text-2xl">{orderTypeLabel(orderType)}</h1>
+            <h1 className="font-display text-2xl">{browsingOrderTypeLabel(orderType, store)}</h1>
             <p className="font-body text-sm text-background/70">Monte seu pedido com carinho, no seu ritmo.</p>
           </div>
         </div>

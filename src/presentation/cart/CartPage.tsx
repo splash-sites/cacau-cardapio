@@ -1,7 +1,7 @@
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, X } from 'lucide-react'
 import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
-import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
+import { browsingOrderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { useCustomer } from '../customer/useCustomer'
@@ -22,9 +22,12 @@ export function CartPage() {
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
 
-  // pickup com cliente já conhecido não precisa de nenhum dado extra (sem mesa,
-  // sem endereço) — pula identificação direto pra revisão.
-  const nextStep = customer && orderType === 'pickup' ? 'revisao' : 'identificacao'
+  // Só pula identificação com cliente já conhecido quando NADA mais precisa ser
+  // perguntado: sem mesa (dine_in) e sem chance de escolher entrega (loja sem
+  // pickup+delivery juntos — se tivesse os dois, precisa passar pelo toggle
+  // retirar/receber em IdentificationPage, mesmo com o cliente já identificado).
+  const nothingElseToAsk = orderType === 'pickup' && store.supportsPickup && !store.supportsDelivery
+  const nextStep = customer && nothingElseToAsk ? 'revisao' : 'identificacao'
 
   return (
     <PageShell className="text-foreground">
@@ -49,7 +52,7 @@ export function CartPage() {
               onClick={() => navigate(`/${store.slug}/cardapio`)}
               className="flex h-11 min-h-11 items-center rounded-full bg-primary px-4 font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              Ver cardápio {orderTypeLabel(orderType)}
+              Ver cardápio {browsingOrderTypeLabel(orderType, store)}
             </button>
           </div>
         ) : (
