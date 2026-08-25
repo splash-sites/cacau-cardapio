@@ -4,6 +4,10 @@ import type { Promotion } from './Promotion'
 export function visiblePromotions(promotions: Promotion[], products: Product[]): Promotion[] {
   const visibleProductIds = new Set(products.map((product) => product.id))
   return promotions
-    .filter((promotion) => visibleProductIds.has(promotion.productId))
+    .filter(
+      (promotion) =>
+        visibleProductIds.has(promotion.productId) &&
+        promotion.comboItems.every((item) => visibleProductIds.has(item.productId)),
+    )
     .sort((a, b) => a.sortOrder - b.sortOrder)
 }

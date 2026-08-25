@@ -17,6 +17,7 @@ export class SupabaseOrderRepository implements OrderRepository {
         note: item.note ?? null,
         addons: item.addons.map((addon) => ({ addon_option_id: addon.id })),
         variations: item.variations.map((variation) => ({ variation_option_id: variation.id })),
+        promotion_id: item.promotionId ?? null,
       })),
       p_table_number: orderType === 'dine_in' ? (tableNumber ?? null) : null,
     })

@@ -2,6 +2,7 @@ import { formatCpf } from '../../domain/customer/cpf'
 import type { Customer } from '../../domain/customer/Customer'
 import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
 import type { CartItem } from '../../domain/cart/CartItem'
+import { groupCartItems, type CartGroup } from '../../domain/cart/groupCartItems'
 import { formatPrice } from '../menu/formatPrice'
 
 function formatAddress(customer: Customer): string {
@@ -11,13 +12,27 @@ function formatAddress(customer: Customer): string {
   return `${street}, ${number}${complementPart} — ${neighborhood}, ${city}/${state} — CEP ${zipCode}`
 }
 
-function formatItemLine(item: CartItem): string {
+function formatItemDescription(item: CartItem): string {
   const details = [...item.variations.map((variation) => variation.name), ...item.addons.map((addon) => addon.name)]
   const detailsText = details.length > 0 ? ` (${details.join(', ')})` : ''
   const noteText = item.note ? ` — obs: ${item.note}` : ''
-  const loverPrice = formatPrice(itemUnitLoverPrice(item) * item.quantity)
-  const regularPrice = formatPrice(itemUnitPrice(item) * item.quantity)
-  return `• ${item.quantity}x ${item.product.name}${detailsText}${noteText} — ${loverPrice} / ${regularPrice}`
+  return `${item.quantity}x ${item.product.name}${detailsText}${noteText}`
+}
+
+function formatGroupLines(group: CartGroup): string[] {
+  if (group.type === 'item') {
+    const loverPrice = formatPrice(itemUnitLoverPrice(group.item) * group.item.quantity)
+    const regularPrice = formatPrice(itemUnitPrice(group.item) * group.item.quantity)
+    return [`• ${formatItemDescription(group.item)} — ${loverPrice} / ${regularPrice}`]
+  }
+
+  const loverTotal = group.items.reduce((sum, item) => sum + itemUnitLoverPrice(item) * item.quantity, 0)
+  const regularTotal = group.items.reduce((sum, item) => sum + itemUnitPrice(item) * item.quantity, 0)
+  return [
+    '• Combo:',
+    ...group.items.map((item) => `   - ${formatItemDescription(item)}`),
+    `   Total combo: ${formatPrice(loverTotal)} / ${formatPrice(regularTotal)}`,
+  ]
 }
 
 export function buildWhatsappOrderMessage(storeName: string, customer: Customer, items: CartItem[]): string {
@@ -30,7 +45,7 @@ export function buildWhatsappOrderMessage(storeName: string, customer: Customer,
     `Endereço: ${formatAddress(customer)}`,
     '',
     'Itens:',
-    ...items.map(formatItemLine),
+    ...groupCartItems(items).flatMap(formatGroupLines),
     '',
     `Total Cacau Lovers*: ${formatPrice(cartLoverTotal(items))}`,
     `Total Não Lover: ${formatPrice(cartTotal(items))}`,

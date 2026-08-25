@@ -69,6 +69,39 @@ describe('buildWhatsappOrderMessage', () => {
     expect(message).toContain('1x Capuccino —')
     expect(message).not.toContain('()')
   })
+
+  it('agrupa itens de combo com cabeçalho e total do combo, em vez de linhas soltas', () => {
+    const water = makeProduct({ id: 'agua', name: 'Água', price: 5, loverPrice: 5 })
+    const items: CartItem[] = [
+      {
+        id: 'combo:c1:agua',
+        product: water,
+        quantity: 1,
+        addons: [],
+        variations: [],
+        comboGroupId: 'c1',
+        promotionId: 'promo1',
+        discountedUnitPrice: 4,
+        discountedLoverUnitPrice: 4,
+      },
+      {
+        id: 'combo:c1:p1',
+        product: makeProduct(),
+        quantity: 1,
+        addons: [],
+        variations: [],
+        comboGroupId: 'c1',
+        promotionId: 'promo1',
+        discountedUnitPrice: 6,
+        discountedLoverUnitPrice: 5,
+      },
+    ]
+    const message = buildWhatsappOrderMessage('Cacau Show Torres', customer, items)
+    expect(message).toContain('• Combo:')
+    expect(message).toContain('- 1x Água')
+    expect(message).toContain('- 1x Capuccino')
+    expect(message).toContain(`Total combo: ${formatPrice(9)} / ${formatPrice(10)}`)
+  })
 })
 
 describe('buildWhatsappUrl', () => {

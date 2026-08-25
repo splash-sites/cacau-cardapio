@@ -1,6 +1,8 @@
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, X } from 'lucide-react'
 import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
+import type { CartItem } from '../../domain/cart/CartItem'
+import { groupCartItems } from '../../domain/cart/groupCartItems'
 import { browsingOrderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
@@ -17,6 +19,7 @@ export function CartPage() {
   const incrementItem = useCart((state) => state.incrementItem)
   const decrementItem = useCart((state) => state.decrementItem)
   const removeItem = useCart((state) => state.removeItem)
+  const removeComboGroup = useCart((state) => state.removeComboGroup)
   const setNote = useCart((state) => state.setNote)
   const navigate = useNavigate()
 
@@ -58,10 +61,20 @@ export function CartPage() {
         ) : (
           <>
             <ul className="flex flex-col gap-3">
-              {items.map((item) => {
-                const { id, product, quantity, note, addons, variations } = item
-                const unitLover = itemUnitLoverPrice(item)
-                const unitRegular = itemUnitPrice(item)
+              {groupCartItems(items).map((group) => {
+                if (group.type === 'combo') {
+                  return (
+                    <ComboGroupCard
+                      key={group.comboGroupId}
+                      items={group.items}
+                      onRemove={() => removeComboGroup(group.comboGroupId)}
+                    />
+                  )
+                }
+
+                const { id, product, quantity, note, addons, variations } = group.item
+                const unitLover = itemUnitLoverPrice(group.item)
+                const unitRegular = itemUnitPrice(group.item)
                 const variationNames = variations.map((variation) => variation.name)
                 const addonNames = addons.map((addon) => addon.name)
                 const detailLine = [...variationNames, ...addonNames].join(', ')
@@ -156,5 +169,42 @@ export function CartPage() {
         )}
       </div>
     </PageShell>
+  )
+}
+
+// Combo é atômico: sem +/- de quantidade nem remoção por linha — só o grupo
+// inteiro (mesma decisão de produto do PromotionDetailModal).
+function ComboGroupCard({ items, onRemove }: { items: CartItem[]; onRemove: () => void }) {
+  const loverTotal = items.reduce((sum, item) => sum + itemUnitLoverPrice(item) * item.quantity, 0)
+  const regularTotal = items.reduce((sum, item) => sum + itemUnitPrice(item) * item.quantity, 0)
+
+  return (
+    <li className="relative rounded-2xl bg-white p-3 shadow-sm">
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Remover combo do carrinho"
+        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center text-foreground/40 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        <X size={16} aria-hidden="true" />
+      </button>
+      <p className="pr-8 font-body text-xs font-bold uppercase tracking-wide text-secondary">Combo</p>
+      <ul className="mt-2 flex flex-col gap-1">
+        {items.map((item) => {
+          const detailLine = [...item.variations.map((variation) => variation.name), ...item.addons.map((addon) => addon.name)].join(', ')
+          return (
+            <li key={item.id} className="font-body text-sm text-foreground">
+              {item.quantity}× {item.product.name}
+              {detailLine && <span className="text-foreground/50"> ({detailLine})</span>}
+            </li>
+          )
+        })}
+      </ul>
+      <div className="mt-2 flex items-center justify-end gap-2 border-t border-secondary/15 pt-2">
+        <p className="font-body font-medium text-primary">{formatPrice(loverTotal)}</p>
+        <span className="text-foreground/40">|</span>
+        <p className="font-body text-sm text-foreground/50">{formatPrice(regularTotal)}</p>
+      </div>
+    </li>
   )
 }

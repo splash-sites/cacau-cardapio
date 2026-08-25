@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { confirmOrder } from '../../application/order/confirmOrder'
 import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
+import { groupCartItems } from '../../domain/cart/groupCartItems'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useCart } from '../cart/useCart'
 import { useCustomer } from '../customer/useCustomer'
@@ -89,10 +90,33 @@ export function ReviewPage() {
           {orderType === 'dine_in' && tableNumber ? ` · Mesa ${tableNumber}` : ''}
         </h2>
         <ul>
-          {items.map((item) => {
-            const { id, product, quantity, addons, variations } = item
-            const unitLover = itemUnitLoverPrice(item)
-            const unitRegular = itemUnitPrice(item)
+          {groupCartItems(items).map((group) => {
+            if (group.type === 'combo') {
+              const loverTotal = group.items.reduce((sum, item) => sum + itemUnitLoverPrice(item) * item.quantity, 0)
+              const regularTotal = group.items.reduce((sum, item) => sum + itemUnitPrice(item) * item.quantity, 0)
+              return (
+                <li key={group.comboGroupId} className="border-b border-secondary/15 py-2 font-body">
+                  <p className="mb-1 font-body text-xs font-bold uppercase tracking-wide text-secondary">Combo</p>
+                  {group.items.map((item) => {
+                    const detailLine = [...item.variations.map((v) => v.name), ...item.addons.map((a) => a.name)].join(', ')
+                    return (
+                      <div key={item.id} className="flex justify-between">
+                        <span>{item.quantity}× {item.product.name}</span>
+                        {detailLine && <span className="text-xs text-foreground/60">{detailLine}</span>}
+                      </div>
+                    )
+                  })}
+                  <div className="mt-1 flex justify-end gap-2 text-right">
+                    <p className="font-medium text-primary">{formatPrice(loverTotal)}</p>
+                    <p className="text-xs text-foreground/50">{formatPrice(regularTotal)}</p>
+                  </div>
+                </li>
+              )
+            }
+
+            const { id, product, quantity, addons, variations } = group.item
+            const unitLover = itemUnitLoverPrice(group.item)
+            const unitRegular = itemUnitPrice(group.item)
             const detailLine = [...variations.map((v) => v.name), ...addons.map((a) => a.name)].join(', ')
 
             return (

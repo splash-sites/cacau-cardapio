@@ -31,6 +31,46 @@ export function addItem(
   return [...items, { id, product, quantity, addons, variations }]
 }
 
+export interface ComboLineInput {
+  product: Product
+  addons: AddonOption[]
+  variations: VariationOption[]
+  quantity: number
+  // Preço base (produto+variação) já com o desconto do combo aplicado — ver
+  // CartItem.discountedUnitPrice pra detalhe de por que isso é só exibição.
+  discountedUnitPrice: number
+  discountedLoverUnitPrice: number
+}
+
+// Combo é atômico: adiciona todas as linhas de uma vez, cada uma com id
+// prefixado por comboGroupId (nunca colide com item avulso, e cada "Adicionar
+// combo" gera um grupo novo — não mescla com uma adição anterior do mesmo
+// combo, mesmo que a composição seja idêntica). Sem +/- de quantidade depois:
+// pra mudar, remove o grupo (removeComboGroup) e adiciona de novo.
+export function addComboItems(
+  items: CartItem[],
+  comboGroupId: string,
+  promotionId: string,
+  lines: ComboLineInput[],
+): CartItem[] {
+  const comboItems: CartItem[] = lines.map((line) => ({
+    id: `combo:${comboGroupId}:${line.product.id}`,
+    product: line.product,
+    quantity: line.quantity,
+    addons: line.addons,
+    variations: line.variations,
+    comboGroupId,
+    promotionId,
+    discountedUnitPrice: line.discountedUnitPrice,
+    discountedLoverUnitPrice: line.discountedLoverUnitPrice,
+  }))
+  return [...items, ...comboItems]
+}
+
+export function removeComboGroup(items: CartItem[], comboGroupId: string): CartItem[] {
+  return items.filter((item) => item.comboGroupId !== comboGroupId)
+}
+
 export function incrementItem(items: CartItem[], itemId: string): CartItem[] {
   return items.map((item) => (item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item))
 }
@@ -58,11 +98,13 @@ function addonsLoverTotal(addons: AddonOption[]): number {
 }
 
 export function itemUnitPrice(item: CartItem): number {
-  return resolveBasePrice(item.product, item.variations).regular + addonsTotal(item.addons)
+  const base = item.discountedUnitPrice ?? resolveBasePrice(item.product, item.variations).regular
+  return base + addonsTotal(item.addons)
 }
 
 export function itemUnitLoverPrice(item: CartItem): number {
-  return resolveBasePrice(item.product, item.variations).lover + addonsLoverTotal(item.addons)
+  const base = item.discountedLoverUnitPrice ?? resolveBasePrice(item.product, item.variations).lover
+  return base + addonsLoverTotal(item.addons)
 }
 
 export function cartTotal(items: CartItem[]): number {

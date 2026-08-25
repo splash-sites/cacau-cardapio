@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addComboItems,
   addItem,
   cartItemCount,
   cartItemId,
@@ -9,6 +10,7 @@ import {
   incrementItem,
   itemUnitLoverPrice,
   itemUnitPrice,
+  removeComboGroup,
   removeItem,
   setItemNote,
 } from './Cart'
@@ -144,6 +146,22 @@ describe('itemUnitPrice / itemUnitLoverPrice', () => {
     expect(itemUnitLoverPrice(item)).toBe(13)
   })
 
+  it('item de combo usa discountedUnitPrice como base, ignora o preço do produto — adicional continua somando por cima', () => {
+    const item: CartItem = {
+      id: 'combo:c1:p1',
+      product: makeProduct({ price: 20, loverPrice: 18 }),
+      quantity: 1,
+      addons: [chantilly],
+      variations: [],
+      comboGroupId: 'c1',
+      promotionId: 'promo1',
+      discountedUnitPrice: 12,
+      discountedLoverUnitPrice: 10,
+    }
+    expect(itemUnitPrice(item)).toBe(12 + 2)
+    expect(itemUnitLoverPrice(item)).toBe(10 + 2)
+  })
+
   it('adicional soma em cima do preço base (com ou sem variação)', () => {
     const item: CartItem = {
       id: 'p1::v:v1::a:a1',
@@ -192,5 +210,68 @@ describe('cartTotal / cartLoverTotal / cartItemCount', () => {
     expect(cartTotal([])).toBe(0)
     expect(cartLoverTotal([])).toBe(0)
     expect(cartItemCount([])).toBe(0)
+  })
+})
+
+describe('addComboItems / removeComboGroup', () => {
+  const water = makeProduct({ id: 'agua', name: 'Água', price: 5, loverPrice: 5 })
+  const fondue = makeProduct({ id: 'fondue', name: 'Fondue', price: 20, loverPrice: 18 })
+
+  it('adiciona todas as linhas do combo de uma vez, com id prefixado pelo comboGroupId', () => {
+    const items = addComboItems([], 'combo-1', 'promo-1', [
+      { product: water, addons: [], variations: [], quantity: 1, discountedUnitPrice: 5, discountedLoverUnitPrice: 5 },
+      { product: fondue, addons: [], variations: [large], quantity: 1, discountedUnitPrice: 15, discountedLoverUnitPrice: 13 },
+    ])
+    expect(items).toEqual([
+      {
+        id: 'combo:combo-1:agua',
+        product: water,
+        quantity: 1,
+        addons: [],
+        variations: [],
+        comboGroupId: 'combo-1',
+        promotionId: 'promo-1',
+        discountedUnitPrice: 5,
+        discountedLoverUnitPrice: 5,
+      },
+      {
+        id: 'combo:combo-1:fondue',
+        product: fondue,
+        quantity: 1,
+        addons: [],
+        variations: [large],
+        comboGroupId: 'combo-1',
+        promotionId: 'promo-1',
+        discountedUnitPrice: 15,
+        discountedLoverUnitPrice: 13,
+      },
+    ])
+  })
+
+  it('duas adições do mesmo combo geram grupos separados, nunca mesclam', () => {
+    const firstAdd = addComboItems([], 'combo-1', 'promo-1', [{ product: water, addons: [], variations: [], quantity: 1, discountedUnitPrice: 5, discountedLoverUnitPrice: 5 }])
+    const items = addComboItems(firstAdd, 'combo-2', 'promo-1', [{ product: water, addons: [], variations: [], quantity: 1, discountedUnitPrice: 5, discountedLoverUnitPrice: 5 }])
+    expect(items).toHaveLength(2)
+    expect(items[0].id).not.toBe(items[1].id)
+  })
+
+  it('combo não mescla com item avulso do mesmo produto', () => {
+    const withStandalone = addItem([], water)
+    const items = addComboItems(withStandalone, 'combo-1', 'promo-1', [
+      { product: water, addons: [], variations: [], quantity: 1, discountedUnitPrice: 5, discountedLoverUnitPrice: 5 },
+    ])
+    expect(items).toHaveLength(2)
+  })
+
+  it('removeComboGroup remove todas as linhas do grupo, sem afetar o resto do carrinho', () => {
+    const standalone = addItem([], fondue)
+    const withCombo = addComboItems(standalone, 'combo-1', 'promo-1', [
+      { product: water, addons: [], variations: [], quantity: 1, discountedUnitPrice: 5, discountedLoverUnitPrice: 5 },
+      { product: fondue, addons: [], variations: [], quantity: 1, discountedUnitPrice: 20, discountedLoverUnitPrice: 18 },
+    ])
+    const result = removeComboGroup(withCombo, 'combo-1')
+    expect(result).toHaveLength(1)
+    expect(result[0].product.id).toBe('fondue')
+    expect(result[0].comboGroupId).toBeUndefined()
   })
 })
