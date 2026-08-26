@@ -15,6 +15,16 @@ import { OrderTrackingView } from './OrderTrackingView'
 import { useOrderType } from './useOrderType'
 import { buildWhatsappOrderMessage, buildWhatsappUrl } from './whatsappOrderMessage'
 
+// PostgrestError (erro real que confirm_order lança) não é instanceof Error —
+// é um objeto plano { message, code, details, hint }. Sem tratar esse caso à
+// parte, o catch caía num JSON.stringify(err) e mostrava o JSON cru pro
+// cliente (ex: {"code":"P0001","message":"..."})  em vez da mensagem.
+function extractErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') return err.message
+  return 'Tente novamente em instantes.'
+}
+
 export function ReviewPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
@@ -65,7 +75,7 @@ export function ReviewPage() {
       setOrderId(result.id)
     } catch (err) {
       console.error('confirmOrder falhou:', err)
-      setErrorMessage(err instanceof Error ? err.message : JSON.stringify(err))
+      setErrorMessage(extractErrorMessage(err))
       setStatus('error')
     }
   }
