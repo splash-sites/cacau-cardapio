@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
@@ -62,6 +63,16 @@ export function IdentificationPage() {
   // RHF criar `address` mesmo sem entrega escolhida, e o Zod para de tratá-lo como
   // opcional (undefined), validando os outros campos obrigatórios do endereço à toa.
   const zipCodeField = wantsDelivery ? register('address.zipCode') : null
+
+  // RHF não desregistra os campos do fieldset de endereço ao desmontar
+  // (shouldUnregister é false por padrão) — sem isso, alternar pra "Receber em
+  // casa" e voltar pra "Retirar no balcão" deixa `address` com valores vazios
+  // presos no form. O Zod trata `address` presente (mesmo vazio) como objeto a
+  // validar por inteiro, mesmo sendo `.optional()`, e o submit falha em
+  // silêncio (campos com erro ficam escondidos, cliente não vê nada acontecer).
+  useEffect(() => {
+    if (!wantsDelivery) setValue('address', undefined)
+  }, [wantsDelivery, setValue])
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
   if (items.length === 0) return <Navigate to={`/${store.slug}/cardapio`} replace />
