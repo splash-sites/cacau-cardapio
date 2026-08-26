@@ -13,10 +13,14 @@ export const addressSchema = z.object({
   zipCode: z.string().regex(/^\d{5}-\d{3}$/, 'CEP inválido'),
 })
 
+const PHONE_REGEX = /^\(?\d{2}\)?\s?9?\s?\d{4}-?\d{4}$/
+
 const identificationObjectSchema = z.object({
   fullName: z.string().trim().min(2, 'Nome muito curto').refine(hasFullName, 'Informe nome e sobrenome'),
   cpf: z.string().refine(isValidCpf, 'CPF inválido'),
-  phone: z.string().regex(/^\(?\d{2}\)?\s?9?\s?\d{4}-?\d{4}$/, 'Telefone inválido'),
+  // Validação de formato fica no superRefine abaixo — telefone só é
+  // obrigatório fora de dine_in (mesa já identifica o cliente fisicamente).
+  phone: z.string(),
   address: addressSchema.optional(),
   tableNumber: z.string().optional(),
   // pickup/delivery viraram uma escolha só, feita aqui no checkout (não mais na
@@ -33,6 +37,14 @@ export type IdentificationInput = z.infer<typeof identificationObjectSchema>
 // aparece). Mesa só quando orderType === 'dine_in', isso não mudou.
 export function identificationSchema(orderType: OrderType) {
   return identificationObjectSchema.superRefine((data, ctx) => {
+    // Telefone obrigatório fora de dine_in. Na mesa, o telefone é opcional —
+    // mas se o cliente digitar algo, ainda valida o formato.
+    const phoneRequired = orderType !== 'dine_in'
+    if (phoneRequired || data.phone) {
+      if (!PHONE_REGEX.test(data.phone)) {
+        ctx.addIssue({ code: 'custom', path: ['phone'], message: 'Telefone inválido' })
+      }
+    }
     if (data.wantsDelivery && !data.address) {
       ctx.addIssue({ code: 'custom', path: ['address'], message: 'Endereço obrigatório para entrega' })
     }

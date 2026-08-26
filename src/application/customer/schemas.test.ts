@@ -62,4 +62,19 @@ describe('identificationSchema', () => {
     const result = identificationSchema('pickup').safeParse({ ...baseInput, phone: '123' })
     expect(result.success).toBe(false)
   })
+
+  it('dine_in aceita sem telefone', () => {
+    const result = identificationSchema('dine_in').safeParse({ ...baseInput, phone: '', tableNumber: '12' })
+    expect(result.success).toBe(true)
+  })
+
+  it('dine_in ainda valida formato se o telefone vier preenchido', () => {
+    const result = identificationSchema('dine_in').safeParse({ ...baseInput, phone: '123', tableNumber: '12' })
+    expect(result.success).toBe(false)
+  })
+
+  it('pickup continua exigindo telefone', () => {
+    const result = identificationSchema('pickup').safeParse({ ...baseInput, phone: '' })
+    expect(result.success).toBe(false)
+  })
 })
