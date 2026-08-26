@@ -133,23 +133,25 @@ export function IdentificationPage() {
           />
           {errors.cpf && <span className="font-body text-xs font-normal normal-case text-red-600">{errors.cpf.message}</span>}
         </label>
-        <label className={`flex flex-col gap-1 ${LABEL}`}>
-          Telefone{orderType === 'dine_in' && ' (opcional)'}
-          <input
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder="(00) 0 0000-0000"
-            maxLength={16}
-            className={`normal-case ${INPUT}`}
-            {...phoneField}
-            onChange={(event) => {
-              event.target.value = maskPhone(event.target.value)
-              onPhoneChange(event)
-            }}
-          />
-          {errors.phone && <span className="font-body text-xs font-normal normal-case text-red-600">{errors.phone.message}</span>}
-        </label>
+        {orderType !== 'dine_in' && (
+          <label className={`flex flex-col gap-1 ${LABEL}`}>
+            Telefone
+            <input
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="(00) 0 0000-0000"
+              maxLength={16}
+              className={`normal-case ${INPUT}`}
+              {...phoneField}
+              onChange={(event) => {
+                event.target.value = maskPhone(event.target.value)
+                onPhoneChange(event)
+              }}
+            />
+            {errors.phone && <span className="font-body text-xs font-normal normal-case text-red-600">{errors.phone.message}</span>}
+          </label>
+        )}
 
         {orderType === 'dine_in' && (
           <label className={`flex flex-col gap-1 ${LABEL}`}>

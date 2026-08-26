@@ -58,7 +58,7 @@ test('adicional múltiplo (Bytes + Granulado) em produto com variação obrigat�
   await page.getByRole('button', { name: 'Continuar' }).click()
   await page.getByLabel('Nome completo').fill('Teste Playwright Adicional')
   await page.getByLabel('CPF').fill(VALID_TEST_CPF)
-  await page.getByLabel('Telefone').fill('51991726861')
+  await expect(page.getByLabel('Telefone')).not.toBeVisible()
   await page.getByRole('button', { name: 'Confirmar' }).click()
 
   await expect(page).toHaveURL(`/${STORE_SLUG}/revisao`)

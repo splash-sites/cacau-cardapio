@@ -43,7 +43,7 @@ test('mesa (QR) → cardápio → carrinho → identificação → confirmação
 
   await page.getByLabel('Nome completo').fill('Teste Playwright E2E')
   await page.getByLabel('CPF').fill(VALID_TEST_CPF)
-  await page.getByLabel('Telefone').fill('51991726861')
+  await expect(page.getByLabel('Telefone')).not.toBeVisible()
   await expect(page.getByLabel('Número da mesa')).toHaveValue(TABLE_NUMBER)
 
   await page.getByRole('button', { name: 'Confirmar' }).click()

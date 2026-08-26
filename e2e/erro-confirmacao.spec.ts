@@ -46,7 +46,7 @@ test('confirm_order recusa o pedido → cliente vê mensagem de erro clara, sem 
   await page.getByRole('button', { name: 'Continuar' }).click()
   await page.getByLabel('Nome completo').fill('Teste Playwright Erro')
   await page.getByLabel('CPF').fill(VALID_TEST_CPF)
-  await page.getByLabel('Telefone').fill('51991726861')
+  await expect(page.getByLabel('Telefone')).not.toBeVisible()
   await page.getByRole('button', { name: 'Confirmar' }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/revisao`)
 

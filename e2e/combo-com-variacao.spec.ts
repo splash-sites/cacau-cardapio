@@ -59,7 +59,7 @@ test('promoção de combo → variação obrigatória em 2 grupos → carrinho a
 
   await page.getByLabel('Nome completo').fill('Teste Playwright Combo')
   await page.getByLabel('CPF').fill(VALID_TEST_CPF)
-  await page.getByLabel('Telefone').fill('51991726861')
+  await expect(page.getByLabel('Telefone')).not.toBeVisible()
   await expect(page.getByLabel('Número da mesa')).toHaveValue(TABLE_NUMBER)
   await page.getByRole('button', { name: 'Confirmar' }).click()
 
