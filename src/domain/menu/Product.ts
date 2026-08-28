@@ -3,6 +3,10 @@ export interface Product {
   storeId: string
   name: string
   category: string
+  // Fonte de verdade pra agrupar/ordenar o cardápio (ver domain/menu/groupByCategory.ts)
+  // — `category` (texto) continua existindo só como espelho legado, nunca usar
+  // pra agrupar. null = produto ainda não categorizado no admin.
+  categoryId: string | null
   description: string | null
   imageUrl: string | null
   unit: string | null

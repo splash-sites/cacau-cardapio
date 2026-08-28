@@ -25,15 +25,20 @@ test('promoção de combo → variação obrigatória em 2 grupos → carrinho a
   await page.goto(`/${STORE_SLUG}/mesa/${TABLE_NUMBER}`)
   await expect(page).toHaveURL(`/${STORE_SLUG}/cardapio`)
 
-  // Loja tem 2 promoções de Fondue em produção — a de teste é a 2ª
-  // (sort_order 1), a de combo real ("COMBO FONDUE + PASTEL FRITO") vem
-  // primeiro no carrossel.
-  await page.getByRole('tab', { name: 'Ver promoção 2' }).click()
-
-  // Carrossel some se a promoção não estiver visível (produto do combo sem
-  // estoque/canal) — falha aqui já denuncia isso, não precisa de asserção extra.
+  // Loja pode ter mais de 1 promoção de Fondue em produção (o carrossel roda
+  // a promoção que estiver ativa naquele momento) — em vez de assumir posição
+  // fixa, navega pelas abas até achar o título certo. Se só existir 1
+  // promoção, o carrossel nem mostra aba, e o slide já é o certo direto.
+  const dialogTitle = 'TESTE - Fondue com desconto'
   const comboSlide = page.locator('div[role="button"][aria-label="Ver detalhes de Fondue"]')
   await expect(comboSlide).toBeVisible({ timeout: 10_000 })
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if ((await page.getByText(dialogTitle).count()) > 0) break
+    const nextTab = page.getByRole('tab', { name: `Ver promoção ${attempt + 2}` })
+    if ((await nextTab.count()) === 0) break
+    await nextTab.click()
+  }
+  await expect(page.getByText(dialogTitle)).toBeVisible({ timeout: 10_000 })
   await comboSlide.click()
 
   const dialog = page.getByRole('dialog', { name: 'TESTE - Fondue com desconto' })

@@ -9,6 +9,7 @@ function makeProduct(id: string): Product {
     storeId: 's1',
     name: 'Produto',
     category: 'Cafés',
+    categoryId: null,
     description: null,
     imageUrl: null,
     unit: null,

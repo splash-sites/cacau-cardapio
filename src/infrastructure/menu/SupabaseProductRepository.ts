@@ -7,6 +7,7 @@ interface PublicProductRow {
   store_id: string
   name: string
   category: string
+  category_id: string | null
   description: string | null
   image_url: string | null
   unit: string | null
@@ -27,6 +28,7 @@ function toProduct(row: PublicProductRow): Product {
     storeId: row.store_id,
     name: row.name,
     category: row.category,
+    categoryId: row.category_id,
     description: row.description,
     imageUrl: row.image_url,
     unit: row.unit,
@@ -47,7 +49,7 @@ export class SupabaseProductRepository implements ProductRepository {
     const { data, error } = await supabase
       .from('public_products')
       .select(
-        'id, store_id, name, category, description, image_url, unit, price, lover_price, stock_quantity, track_stock, sort_order, active, available_dine_in, available_pickup, available_delivery',
+        'id, store_id, name, category, category_id, description, image_url, unit, price, lover_price, stock_quantity, track_stock, sort_order, active, available_dine_in, available_pickup, available_delivery',
       )
       .eq('store_id', storeId)
       .order('sort_order', { ascending: true })

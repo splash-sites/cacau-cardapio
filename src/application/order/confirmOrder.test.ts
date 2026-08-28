@@ -9,6 +9,7 @@ function makeProduct(overrides: Partial<Product> = {}): Product {
     storeId: 'store-1',
     name: 'Brownie',
     category: 'Doces',
+    categoryId: null,
     description: null,
     imageUrl: null,
     unit: 'un',
