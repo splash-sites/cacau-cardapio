@@ -17,6 +17,7 @@ import {
   type VariationSelections,
 } from '../../domain/variation/variationSelection'
 import { useCart } from '../cart/useCart'
+import { resizedImageUrl } from '../shared/resizedImageUrl'
 import { AddonGroupSection } from './AddonGroupSection'
 import { formatPrice } from './formatPrice'
 import { ImageLightbox } from './ImageLightbox'
@@ -151,7 +152,12 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
                 aria-label={`Ver imagem ampliada de ${product.name}`}
                 className="block h-full w-full cursor-pointer"
               >
-                <img src={product.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <img
+                  src={resizedImageUrl(product.imageUrl, 384, 384) ?? undefined}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
               </button>
             )}
             <button

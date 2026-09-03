@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 // Combo com desconto, cobrindo o caso mais complexo do domínio: um item do
 // combo (Fondue) com 2 grupos de variação obrigatórios (sabor de fruta +
@@ -8,15 +8,6 @@ import { expect, test, type Page } from '@playwright/test'
 const STORE_SLUG = 'cacau-show-capao'
 const TABLE_NUMBER = '12'
 const VALID_TEST_CPF = '111.444.777-35'
-
-async function scrollUntilVisible(page: Page, locator: ReturnType<Page['getByRole']>) {
-  for (let attempt = 0; attempt < 30; attempt++) {
-    if (await locator.isVisible()) return
-    await page.mouse.wheel(0, 600)
-    await page.waitForTimeout(50)
-  }
-  await expect(locator).toBeVisible()
-}
 
 test('promoção de combo → variação obrigatória em 2 grupos → carrinho agrupado → confirmação', async ({ page }) => {
   // Desliga autoplay do carrossel (respeita prefers-reduced-motion) — evita

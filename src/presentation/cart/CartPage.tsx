@@ -9,6 +9,7 @@ import { useCurrentStore } from '../store/useCurrentStore'
 import { useCustomer } from '../customer/useCustomer'
 import { formatPrice } from '../menu/formatPrice'
 import { PageShell } from '../shared/PageShell'
+import { resizedImageUrl } from '../shared/resizedImageUrl'
 import { useCart } from './useCart'
 
 export function CartPage() {
@@ -93,7 +94,7 @@ export function CartPage() {
                       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-secondary/10">
                         {product.imageUrl && (
                           <img
-                            src={product.imageUrl}
+                            src={resizedImageUrl(product.imageUrl, 64, 64) ?? undefined}
                             alt=""
                             loading="lazy"
                             width={64}

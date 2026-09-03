@@ -21,6 +21,7 @@ import {
 } from '../../domain/variation/variationSelection'
 import type { VariationOption } from '../../domain/variation/VariationOption'
 import { useCart } from '../cart/useCart'
+import { resizedImageUrl } from '../shared/resizedImageUrl'
 import { AddonGroupSection } from './AddonGroupSection'
 import { formatPrice } from './formatPrice'
 import { useProductAddons } from './useProductAddons'
@@ -313,7 +314,12 @@ function ComboSlotSection({
     <div className="flex flex-col gap-3 rounded-xl border border-secondary/15 bg-white/40 p-3">
       <div className="flex items-center gap-3">
         {product.imageUrl && (
-          <img src={product.imageUrl} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+          <img
+            src={resizedImageUrl(product.imageUrl, 56, 56) ?? undefined}
+            alt=""
+            loading="lazy"
+            className="h-14 w-14 shrink-0 rounded-lg object-cover"
+          />
         )}
         <p className="font-body text-sm font-bold text-foreground">
           {quantity > 1 && `${quantity}× `}

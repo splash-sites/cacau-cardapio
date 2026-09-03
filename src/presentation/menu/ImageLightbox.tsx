@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { resizedImageUrl } from '../shared/resizedImageUrl'
 
 interface ImageLightboxProps {
   imageUrl: string
@@ -58,7 +59,14 @@ export function ImageLightbox({ imageUrl, name, price, onClose }: ImageLightboxP
           visible ? 'scale-100' : 'scale-[0.8]'
         }`}
       >
-        <img src={imageUrl} alt={name} className="w-full rounded-xl object-cover" />
+        {/* Ampliada de propósito — usuário pediu pra ver detalhe, então pede
+        resolução maior que o resto do app, mas ainda longe do arquivo cru
+        (que pode vir com vários MB). */}
+        <img
+          src={resizedImageUrl(imageUrl, 640, 640, 80) ?? undefined}
+          alt={name}
+          className="w-full rounded-xl object-cover"
+        />
         <p className="font-display text-xl text-background">{name}</p>
         <p className="font-body font-medium text-primary">{price}</p>
       </div>

@@ -3,6 +3,7 @@ import type { Product } from '../../domain/menu/Product'
 import type { Promotion } from '../../domain/promotion/Promotion'
 import { distributePromotionDiscount } from '../../domain/promotion/promotionPricing'
 import { visiblePromotions } from '../../domain/promotion/visiblePromotions'
+import { resizedImageUrl } from '../shared/resizedImageUrl'
 import { formatPrice } from './formatPrice'
 import { ProductDetailModal } from './ProductDetailModal'
 import { PromotionDetailModal } from './PromotionDetailModal'
@@ -80,7 +81,12 @@ export function PromotionCarousel({ promotions, products }: { promotions: Promot
         aria-label={`Ver detalhes de ${product.name}`}
         className="relative block h-40 w-full cursor-pointer overflow-hidden rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        <img src={promotion.imageUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src={resizedImageUrl(promotion.imageUrl, 384, 160) ?? undefined}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-accent/95 via-accent/70 to-transparent" aria-hidden="true" />
 
         <div className="relative flex h-full flex-col justify-center gap-1 px-4">
