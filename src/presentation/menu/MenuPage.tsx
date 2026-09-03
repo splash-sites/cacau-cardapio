@@ -3,31 +3,19 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { cartItemCount, cartTotal } from '../../domain/cart/Cart'
-import type { Product } from '../../domain/menu/Product'
 import { browsingOrderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { FixedBottomBar } from '../shared/FixedBottomBar'
 import { PageShell } from '../shared/PageShell'
+import { CATEGORY_PILL_BAR_HEIGHT_PX, CategoryPillBar } from './CategoryPillBar'
 import { ProductCard } from './ProductCard'
 import { PromotionCarousel } from './PromotionCarousel'
 import { formatPrice } from './formatPrice'
+import { buildRows, categoryRowIndex, nearestCategoryLabel } from './menuRows'
 import { useMenu } from './useMenu'
 import { usePromotions } from './usePromotions'
-
-type MenuRow = { type: 'category'; category: string } | { type: 'product'; product: Product }
-
-function buildRows(groups: Map<string, Product[]>): MenuRow[] {
-  const rows: MenuRow[] = []
-  for (const [category, products] of groups.entries()) {
-    rows.push({ type: 'category', category })
-    for (const product of products) {
-      rows.push({ type: 'product', product })
-    }
-  }
-  return rows
-}
 
 export function MenuPage() {
   const store = useCurrentStore()
@@ -39,6 +27,8 @@ export function MenuPage() {
   const { data: promotions } = usePromotions(store.id)
 
   const rows = useMemo(() => (groups ? buildRows(groups) : []), [groups])
+  const categories = useMemo(() => (groups ? [...groups.keys()] : []), [groups])
+  const rowIndexByCategory = useMemo(() => categoryRowIndex(rows), [rows])
 
   const listRef = useRef<HTMLDivElement>(null)
   const listOffsetRef = useRef(0)
@@ -53,6 +43,27 @@ export function MenuPage() {
     overscan: 8,
     scrollMargin: listOffsetRef.current,
   })
+
+  // Pílula ativa (scroll-spy): acha a linha que está bem no topo da área
+  // visível agora (logo abaixo da barra fixa) e sobe até o cabeçalho de
+  // categoria mais próximo dela. A barra é sticky e cobre os primeiros
+  // CATEGORY_PILL_BAR_HEIGHT_PX da viewport — soma isso ao scrollOffset,
+  // senão "topo visível" ficaria escondido atrás da barra.
+  const virtualItems = rowVirtualizer.getVirtualItems()
+  const scrollOffset = rowVirtualizer.scrollOffset ?? 0
+  const topVisibleItem =
+    virtualItems.find((item) => item.end > scrollOffset + CATEGORY_PILL_BAR_HEIGHT_PX) ?? virtualItems[0]
+  const activeCategory = topVisibleItem ? nearestCategoryLabel(rows, topVisibleItem.index) : null
+
+  function handleSelectCategory(category: string) {
+    const index = rowIndexByCategory.get(category)
+    if (index === undefined) return
+    rowVirtualizer.scrollToIndex(index, { align: 'start' })
+    // scrollToIndex alinha o topo do item com y=0 da viewport — mas a barra
+    // de categoria é sticky e cobre esse espaço, escondendo o cabeçalho atrás
+    // dela. Desconta a altura da barra pra ele ficar visível logo abaixo.
+    setTimeout(() => window.scrollBy(0, -CATEGORY_PILL_BAR_HEIGHT_PX), 100)
+  }
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
 
@@ -84,6 +95,8 @@ export function MenuPage() {
           <ShoppingBag size={20} aria-hidden="true" />
         </button>
       </div>
+
+      <CategoryPillBar categories={categories} active={activeCategory} onSelect={handleSelectCategory} />
 
       <div className="px-4 py-6 pb-24">
         {groups && promotions && promotions.length > 0 && (
