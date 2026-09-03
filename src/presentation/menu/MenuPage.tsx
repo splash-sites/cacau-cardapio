@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
@@ -9,6 +9,7 @@ import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { FixedBottomBar } from '../shared/FixedBottomBar'
 import { PageShell } from '../shared/PageShell'
+import { prefersReducedMotion } from '../shared/prefersReducedMotion'
 import { CATEGORY_PILL_BAR_HEIGHT_PX, CategoryPillBar } from './CategoryPillBar'
 import { ProductCard } from './ProductCard'
 import { PromotionCarousel } from './PromotionCarousel'
@@ -55,14 +56,35 @@ export function MenuPage() {
     virtualItems.find((item) => item.end > scrollOffset + CATEGORY_PILL_BAR_HEIGHT_PX) ?? virtualItems[0]
   const activeCategory = topVisibleItem ? nearestCategoryLabel(rows, topVisibleItem.index) : null
 
+  // Ir com behavior:'smooth' direto no scrollToIndex (ou corrigir a barra fixa
+  // depois, com scrollBy/scrollend) conflita com a remedição dinâmica do
+  // virtualizer — testado 3 formas diferentes, todas pousavam em posição
+  // errada (às vezes centenas de px de diferença) numa categoria bem abaixo
+  // na lista, porque a correção lê a posição atual/estimada, não a real. O
+  // pulo instantâneo (scrollToIndex + scrollBy) é o único jeito comprovado
+  // de pousar exato. Pra não parecer um corte seco, disfarça com um
+  // esmaecer/reaparecer rápido em vez de tentar animar o scroll em si.
+  const [transitioning, setTransitioning] = useState(false)
+
   function handleSelectCategory(category: string) {
     const index = rowIndexByCategory.get(category)
     if (index === undefined) return
-    rowVirtualizer.scrollToIndex(index, { align: 'start' })
-    // scrollToIndex alinha o topo do item com y=0 da viewport — mas a barra
-    // de categoria é sticky e cobre esse espaço, escondendo o cabeçalho atrás
-    // dela. Desconta a altura da barra pra ele ficar visível logo abaixo.
-    setTimeout(() => window.scrollBy(0, -CATEGORY_PILL_BAR_HEIGHT_PX), 100)
+
+    function jump() {
+      rowVirtualizer.scrollToIndex(index!, { align: 'start' })
+      setTimeout(() => rowVirtualizer.scrollBy(-CATEGORY_PILL_BAR_HEIGHT_PX), 100)
+    }
+
+    if (prefersReducedMotion()) {
+      jump()
+      return
+    }
+
+    setTransitioning(true)
+    setTimeout(() => {
+      jump()
+      setTimeout(() => setTransitioning(false), 150)
+    }, 150)
   }
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
@@ -110,7 +132,11 @@ export function MenuPage() {
         )}
 
         {groups && groups.size > 0 && (
-          <div ref={listRef} style={{ position: 'relative', height: rowVirtualizer.getTotalSize() }}>
+          <div
+            ref={listRef}
+            style={{ position: 'relative', height: rowVirtualizer.getTotalSize() }}
+            className={`transition-opacity duration-150 motion-reduce:transition-none ${transitioning ? 'opacity-0' : 'opacity-100'}`}
+          >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const row = rows[virtualRow.index]
               return (

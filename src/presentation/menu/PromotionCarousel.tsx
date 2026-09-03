@@ -3,16 +3,13 @@ import type { Product } from '../../domain/menu/Product'
 import type { Promotion } from '../../domain/promotion/Promotion'
 import { distributePromotionDiscount } from '../../domain/promotion/promotionPricing'
 import { visiblePromotions } from '../../domain/promotion/visiblePromotions'
+import { prefersReducedMotion } from '../shared/prefersReducedMotion'
 import { resizedImageUrl } from '../shared/resizedImageUrl'
 import { formatPrice } from './formatPrice'
 import { ProductDetailModal } from './ProductDetailModal'
 import { PromotionDetailModal } from './PromotionDetailModal'
 
 const AUTOPLAY_MS = 3500
-
-function prefersReducedMotion() {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
 
 // Prévia do preço no card do carrossel, na quantidade base (1x o combo, sem
 // adicional/variação escolhidos ainda — isso só acontece no PromotionDetailModal).
