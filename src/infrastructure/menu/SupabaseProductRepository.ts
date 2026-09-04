@@ -1,3 +1,4 @@
+import { formatProductName } from '../../domain/menu/formatProductName'
 import type { Product } from '../../domain/menu/Product'
 import type { ProductRepository } from '../../application/menu/ProductRepository'
 import { supabase } from '../supabase/client'
@@ -26,7 +27,7 @@ function toProduct(row: PublicProductRow): Product {
   return {
     id: row.id,
     storeId: row.store_id,
-    name: row.name,
+    name: formatProductName(row.name),
     category: row.category,
     categoryId: row.category_id,
     description: row.description,
