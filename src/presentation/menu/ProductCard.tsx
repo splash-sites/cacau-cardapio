@@ -25,11 +25,15 @@ export function ProductCard({ product }: { product: Product }) {
 
       <div className="flex flex-1 flex-col gap-1">
         {/* Altura fixa reservada pra 2 linhas (line-height 28px × 2 = 56px do
-        min-h-14), nome curto sobra espaço em branco embaixo, nome longo corta
-        com "..." na 2ª linha — nunca varia. Card com altura sempre igual é o
-        que faz o scroll suave até uma categoria pousar exato (virtualização
-        não precisa mais estimar/corrigir altura de linha, o card é fixo). */}
-        <p className="font-body text-lg font-bold text-foreground line-clamp-2 min-h-14">{product.name}</p>
+        min-h-14) — nunca varia, é o que faz o scroll suave até uma categoria
+        pousar exato (virtualização não precisa mais estimar/corrigir altura
+        de linha, o card é fixo). Nome de 1 linha só fica centralizado nesse
+        espaço (flex items-center no wrapper) em vez de colado no topo com
+        espaço em branco só embaixo — nome de 2 linhas ocupa tudo igual;
+        nome de 3+ linhas corta com "..." na 2ª (line-clamp-2 no <p>). */}
+        <div className="flex min-h-14 items-center">
+          <p className="font-body text-lg font-bold text-foreground line-clamp-2">{product.name}</p>
+        </div>
         <span className="inline-flex w-fit items-center rounded-full border border-primary px-2 py-0.5 font-body text-[11px] font-medium text-secondary">
           Cacau Lovers*
         </span>
