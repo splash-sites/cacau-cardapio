@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
@@ -40,7 +40,11 @@ export function MenuPage() {
 
   const rowVirtualizer = useWindowVirtualizer({
     count: rows.length,
-    estimateSize: (index) => (rows[index]?.type === 'category' ? 36 : 128),
+    // Números exatos, não estimativa — ProductCard tem altura sempre igual
+    // (nome com line-clamp-2 + min-h-14, ver ProductCard.tsx), medido ao
+    // vivo: linha de produto 153px (card 141 + pb-3 12px), categoria 28px.
+    // É isso que permite scrollToIndex com behavior:'smooth' pousar exato.
+    estimateSize: (index) => (rows[index]?.type === 'category' ? 28 : 153),
     overscan: 8,
     scrollMargin: listOffsetRef.current,
   })
@@ -56,35 +60,49 @@ export function MenuPage() {
     virtualItems.find((item) => item.end > scrollOffset + CATEGORY_PILL_BAR_HEIGHT_PX) ?? virtualItems[0]
   const activeCategory = topVisibleItem ? nearestCategoryLabel(rows, topVisibleItem.index) : null
 
-  // Ir com behavior:'smooth' direto no scrollToIndex (ou corrigir a barra fixa
-  // depois, com scrollBy/scrollend) conflita com a remedição dinâmica do
-  // virtualizer — testado 3 formas diferentes, todas pousavam em posição
-  // errada (às vezes centenas de px de diferença) numa categoria bem abaixo
-  // na lista, porque a correção lê a posição atual/estimada, não a real. O
-  // pulo instantâneo (scrollToIndex + scrollBy) é o único jeito comprovado
-  // de pousar exato. Pra não parecer um corte seco, disfarça com um
-  // esmaecer/reaparecer rápido em vez de tentar animar o scroll em si.
-  const [transitioning, setTransitioning] = useState(false)
+  // Com o card de produto em altura FIXA (ver ProductCard.tsx e o
+  // estimateSize acima), scrollToIndex não precisa mais corrigir a posição
+  // depois de chegar perto (a estimativa já é exata) — sobra só descontar a
+  // altura da barra fixa. scrollToOffset manual (bypassando scrollToIndex)
+  // não tratava o scrollMargin do mesmo jeito e pousava ~400-500px errado —
+  // scrollToIndex continua sendo o único jeito comprovado de acertar isso.
+  //
+  // A correção da barra roda via 'scrollend' NATIVO do navegador (não do
+  // virtualizer, não um setTimeout chutado) — só depois que a rolagem
+  // termina de vez, mesmo pra behavior:'auto' (aplicar na hora ainda corria
+  // cedo demais, antes do scroll instantâneo realmente registrar). Se
+  // clicar noutra categoria antes da correção anterior disparar, cancela o
+  // listener velho — senão ele aplica na hora errada, em cima do scroll novo.
+  const pendingCorrectionRef = useRef<(() => void) | null>(null)
 
   function handleSelectCategory(category: string) {
     const index = rowIndexByCategory.get(category)
     if (index === undefined) return
 
-    function jump() {
-      rowVirtualizer.scrollToIndex(index!, { align: 'start' })
-      setTimeout(() => rowVirtualizer.scrollBy(-CATEGORY_PILL_BAR_HEIGHT_PX), 100)
+    if (pendingCorrectionRef.current) {
+      window.removeEventListener('scrollend', pendingCorrectionRef.current)
+      pendingCorrectionRef.current = null
     }
 
-    if (prefersReducedMotion()) {
-      jump()
-      return
+    const reduceMotion = prefersReducedMotion()
+    rowVirtualizer.scrollToIndex(index, { align: 'start', behavior: reduceMotion ? 'auto' : 'smooth' })
+
+    const correct = () => {
+      window.scrollBy(0, -CATEGORY_PILL_BAR_HEIGHT_PX)
+      pendingCorrectionRef.current = null
     }
 
-    setTransitioning(true)
-    setTimeout(() => {
-      jump()
-      setTimeout(() => setTransitioning(false), 150)
-    }, 150)
+    if (reduceMotion) {
+      // 'scrollend' não dispara de forma confiável pra scroll instantâneo
+      // (testado ao vivo — scrollY chegava no lugar certo e ficava parado,
+      // o listener nunca rodava). Um rAF já basta aqui: sem remedição
+      // dinâmica pra esperar (altura fixa), só precisa da rolagem
+      // instantânea ter registrado antes de corrigir.
+      requestAnimationFrame(correct)
+    } else {
+      pendingCorrectionRef.current = correct
+      window.addEventListener('scrollend', correct, { once: true })
+    }
   }
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
@@ -132,11 +150,7 @@ export function MenuPage() {
         )}
 
         {groups && groups.size > 0 && (
-          <div
-            ref={listRef}
-            style={{ position: 'relative', height: rowVirtualizer.getTotalSize() }}
-            className={`transition-opacity duration-150 motion-reduce:transition-none ${transitioning ? 'opacity-0' : 'opacity-100'}`}
-          >
+          <div ref={listRef} style={{ position: 'relative', height: rowVirtualizer.getTotalSize() }}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const row = rows[virtualRow.index]
               return (
