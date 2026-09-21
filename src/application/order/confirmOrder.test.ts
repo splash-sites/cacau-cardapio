@@ -49,6 +49,22 @@ describe('confirmOrder', () => {
     expect(repo.createOrder).not.toHaveBeenCalled()
   })
 
+  it('rejeita pedido de revendedor em delivery', async () => {
+    const repo: OrderRepository = { createOrder: vi.fn() }
+    const input = makeInput({
+      orderType: 'delivery',
+      salesChannel: 'reseller',
+      customer: {
+        fullName: 'Maria Silva',
+        cpf: '52998224725',
+        phone: '51999998888',
+        address: { street: 'Rua A', number: '1', complement: '', neighborhood: 'Centro', city: 'Torres', state: 'RS', zipCode: '95560000' },
+      },
+    })
+    await expect(confirmOrder(repo, input)).rejects.toThrow('revendedor')
+    expect(repo.createOrder).not.toHaveBeenCalled()
+  })
+
   it('rejeita pedido de revendedor em dine_in', async () => {
     const repo: OrderRepository = { createOrder: vi.fn() }
     await expect(confirmOrder(repo, makeInput({ orderType: 'dine_in', salesChannel: 'reseller' }))).rejects.toThrow(

@@ -4,9 +4,8 @@ import { useCurrentStore } from '../store/useCurrentStore'
 import { useOrderType } from './useOrderType'
 
 // Entrada do canal de revendedor (/:storeSlug/atacado). Mesmas telas do varejo
-// dali em diante — a diferença é só o canal no estado. Sem mesa: revendedor só
-// retira ou recebe, então cai em 'pickup' (o toggle retirar/receber continua
-// sendo feito na identificação) ou 'delivery' se a loja não aceitar retirada.
+// dali em diante — a diferença é só o canal no estado. Revendedor só retira no
+// local: sempre 'pickup' (sem mesa, sem entrega). Loja sem retirada não tem atacado.
 // `ready` pelo mesmo motivo do TableEntryPage: estado setado antes do <Navigate>.
 export function ResellerEntryPage() {
   const store = useCurrentStore()
@@ -14,17 +13,16 @@ export function ResellerEntryPage() {
   const setOrderType = useOrderType((state) => state.setOrderType)
   const [ready, setReady] = useState(false)
 
-  const orderType = store.supportsPickup ? 'pickup' : store.supportsDelivery ? 'delivery' : null
-  const valid = store.resellerEnabled && orderType !== null
+  const valid = store.resellerEnabled && store.supportsPickup
 
   useEffect(() => {
-    if (valid && orderType) {
+    if (valid) {
       setSalesChannel('reseller')
-      setOrderType(orderType)
+      setOrderType('pickup')
     }
     setReady(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [valid, orderType])
+  }, [valid])
 
   if (!ready) return null
   if (!valid) return <Navigate to={`/${store.slug}`} replace />

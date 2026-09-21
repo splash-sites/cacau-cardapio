@@ -20,6 +20,7 @@ const INPUT =
 export function IdentificationPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
+  const salesChannel = useOrderType((state) => state.salesChannel)
   const tableNumber = useOrderType((state) => state.tableNumber)
   const setOrderType = useOrderType((state) => state.setOrderType)
   const setTableNumber = useOrderType((state) => state.setTableNumber)
@@ -31,7 +32,9 @@ export function IdentificationPage() {
   // pickup e delivery viraram uma escolha só, feita aqui (não mais na tela de tipo
   // de pedido) — só mostra o toggle se a loja aceitar os dois. Se só aceitar um,
   // orderType já chega resolvido (OrderTypeSelectionPage) e não pergunta de novo.
-  const showFulfillmentToggle = orderType !== 'dine_in' && store.supportsPickup && store.supportsDelivery
+  // Revendedor nunca recebe em casa — só retira no local, então nem o toggle aparece.
+  const showFulfillmentToggle =
+    salesChannel === 'retail' && orderType !== 'dine_in' && store.supportsPickup && store.supportsDelivery
 
   const {
     register,
@@ -52,7 +55,7 @@ export function IdentificationPage() {
       tableNumber: tableNumber ?? '',
       // orderType só chega 'delivery' quando a loja não aceita pickup (toggle
       // nem aparece nesse caso) — cobre a entrega forçada sem pedir de novo.
-      wantsDelivery: orderType === 'delivery',
+      wantsDelivery: salesChannel === 'retail' && orderType === 'delivery',
     },
   })
 
@@ -86,7 +89,7 @@ export function IdentificationPage() {
     })
     if (input.tableNumber) setTableNumber(input.tableNumber)
     if (orderType === 'pickup' || orderType === 'delivery') {
-      setOrderType(input.wantsDelivery ? 'delivery' : 'pickup')
+      setOrderType(salesChannel === 'retail' && input.wantsDelivery ? 'delivery' : 'pickup')
     }
     navigate(`/${store.slug}/revisao`)
   }

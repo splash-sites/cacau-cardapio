@@ -30,8 +30,10 @@ export function CartPage() {
   // Só pula identificação com cliente já conhecido quando NADA mais precisa ser
   // perguntado: sem mesa (dine_in) e sem chance de escolher entrega (loja sem
   // pickup+delivery juntos — se tivesse os dois, precisa passar pelo toggle
-  // retirar/receber em IdentificationPage, mesmo com o cliente já identificado).
-  const nothingElseToAsk = orderType === 'pickup' && store.supportsPickup && !store.supportsDelivery
+  // retirar/receber em IdentificationPage, mesmo com o cliente já identificado;
+  // revendedor nunca tem o toggle, só retira).
+  const nothingElseToAsk =
+    orderType === 'pickup' && store.supportsPickup && (salesChannel === 'reseller' || !store.supportsDelivery)
   const nextStep = customer && nothingElseToAsk ? 'revisao' : 'identificacao'
 
   return (

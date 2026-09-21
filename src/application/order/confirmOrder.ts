@@ -2,8 +2,8 @@ import type { CreateOrderInput, CreatedOrder, OrderRepository } from './OrderRep
 
 export async function confirmOrder(repo: OrderRepository, input: CreateOrderInput): Promise<CreatedOrder> {
   if (input.items.length === 0) throw new Error('Carrinho vazio')
-  if (input.salesChannel === 'reseller' && input.orderType === 'dine_in') {
-    throw new Error('Pedido de revendedor não aceita consumo no local')
+  if (input.salesChannel === 'reseller' && input.orderType !== 'pickup') {
+    throw new Error('Pedido de revendedor só aceita retirada no local')
   }
   if (input.orderType === 'delivery' && !input.customer.address) {
     throw new Error('Endereço obrigatório para entrega')
