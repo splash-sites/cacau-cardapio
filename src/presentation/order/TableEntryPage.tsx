@@ -12,12 +12,14 @@ export function TableEntryPage() {
   const { numeroMesa } = useParams<{ numeroMesa: string }>()
   const setOrderType = useOrderType((state) => state.setOrderType)
   const setTableNumber = useOrderType((state) => state.setTableNumber)
+  const setSalesChannel = useOrderType((state) => state.setSalesChannel)
   const [ready, setReady] = useState(false)
 
   const valid = store.supportsDineIn && !!numeroMesa?.trim()
 
   useEffect(() => {
     if (valid) {
+      setSalesChannel('retail')
       setOrderType('dine_in')
       setTableNumber(numeroMesa!.trim())
     }

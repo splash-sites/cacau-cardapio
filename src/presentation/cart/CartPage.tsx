@@ -3,6 +3,7 @@ import { ArrowLeft, X } from 'lucide-react'
 import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
 import type { CartItem } from '../../domain/cart/CartItem'
 import { groupCartItems } from '../../domain/cart/groupCartItems'
+import { remainingResellerStock } from '../../domain/cart/resellerStock'
 import { browsingOrderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
@@ -14,6 +15,7 @@ import { useCart } from './useCart'
 export function CartPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
+  const salesChannel = useOrderType((state) => state.salesChannel)
   const customer = useCustomer((state) => state.customer)
   const items = useCart((state) => state.items)
   const incrementItem = useCart((state) => state.incrementItem)
@@ -78,6 +80,9 @@ export function CartPage() {
                 const variationNames = variations.map((variation) => variation.name)
                 const addonNames = addons.map((addon) => addon.name)
                 const detailLine = [...variationNames, ...addonNames].join(', ')
+                // Revendedor: o saldo do produto limita o carrinho (soma de todas as linhas dele).
+                const remainingStock = salesChannel === 'reseller' ? remainingResellerStock(items, product) : null
+                const atStockLimit = remainingStock !== null && remainingStock <= 0
 
                 return (
                   <li key={id} className="relative rounded-2xl bg-white p-3 shadow-sm">
@@ -125,8 +130,9 @@ export function CartPage() {
                             <button
                               type="button"
                               onClick={() => incrementItem(id)}
+                              disabled={atStockLimit}
                               aria-label={`Adicionar mais um ${product.name}`}
-                              className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                              className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40"
                             >
                               +
                             </button>
@@ -136,6 +142,9 @@ export function CartPage() {
                             <p className="font-body text-xs text-foreground/50">{formatPrice(unitRegular * quantity)}</p>
                           </div>
                         </div>
+                        {atStockLimit && (
+                          <p className="font-body text-xs text-foreground/60">Você já pediu todo o estoque disponível.</p>
+                        )}
                       </div>
                     </div>
                     <input

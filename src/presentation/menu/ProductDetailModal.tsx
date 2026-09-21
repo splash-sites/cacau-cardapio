@@ -8,6 +8,7 @@ import {
   resolveSelectedAddons,
 } from '../../domain/addon/addonSelection'
 import { cartItemId } from '../../domain/cart/Cart'
+import { remainingResellerStock } from '../../domain/cart/resellerStock'
 import type { Product } from '../../domain/menu/Product'
 import {
   isVariationSelectionComplete,
@@ -17,6 +18,7 @@ import {
   type VariationSelections,
 } from '../../domain/variation/variationSelection'
 import { useCart } from '../cart/useCart'
+import { useOrderType } from '../order/useOrderType'
 import { AddonGroupSection } from './AddonGroupSection'
 import { formatPrice } from './formatPrice'
 import { ImageLightbox } from './ImageLightbox'
@@ -31,6 +33,8 @@ const SWIPE_CLOSE_THRESHOLD_PX = 90
 export function ProductDetailModal({ product, onClose }: { product: Product; onClose: () => void }) {
   const addItem = useCart((state) => state.addItem)
   const setNote = useCart((state) => state.setNote)
+  const cartItems = useCart((state) => state.items)
+  const salesChannel = useOrderType((state) => state.salesChannel)
 
   const { data: addonGroups, isPending: addonsPending, isError: addonsError } = useProductAddons(product.id)
   const { data: variationGroups, isPending: variationsPending, isError: variationsError } = useProductVariations(product.id)
@@ -94,6 +98,11 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
     dragStartY.current = null
     setDragging(false)
   }
+
+  // Só o revendedor tem saldo próprio limitando o carrinho (null = sem limite).
+  const remainingStock = salesChannel === 'reseller' ? remainingResellerStock(cartItems, product) : null
+  const maxQuantity = remainingStock ?? Infinity
+  const outOfStock = remainingStock !== null && remainingStock <= 0
 
   const groups = addonGroups ?? []
   const varGroups = variationGroups ?? []
@@ -227,14 +236,20 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
                 <span className="min-w-4 text-center font-body font-medium text-foreground">{quantity}</span>
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => q + 1)}
+                  onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                  disabled={quantity >= maxQuantity}
                   aria-label="Aumentar quantidade"
-                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40"
                 >
                   +
                 </button>
               </div>
             </div>
+            {remainingStock !== null && (
+              <p className="text-right font-body text-xs text-foreground/60">
+                {outOfStock ? 'Você já pediu todo o estoque disponível.' : `Restam ${remainingStock} em estoque.`}
+              </p>
+            )}
           </div>
         </div>
 
@@ -257,7 +272,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           <button
             type="button"
             onClick={handleAdd}
-            disabled={!variationsComplete || optionsLoadError || optionsLoading}
+            disabled={!variationsComplete || optionsLoadError || optionsLoading || outOfStock}
             className="h-11 min-h-11 w-full rounded-2xl bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
           >
             Adicionar ao pedido

@@ -3,7 +3,7 @@ import { normalizeCpf } from '../../domain/customer/cpf'
 import { supabase } from '../supabase/client'
 
 export class SupabaseOrderRepository implements OrderRepository {
-  async createOrder({ storeId, orderType, customer, items, tableNumber }: CreateOrderInput): Promise<CreatedOrder> {
+  async createOrder({ storeId, orderType, customer, items, tableNumber, salesChannel }: CreateOrderInput): Promise<CreatedOrder> {
     const { data, error } = await supabase.rpc('confirm_order', {
       p_store_id: storeId,
       p_order_type: orderType,
@@ -20,6 +20,9 @@ export class SupabaseOrderRepository implements OrderRepository {
         promotion_id: item.promotionId ?? null,
       })),
       p_table_number: orderType === 'dine_in' ? (tableNumber ?? null) : null,
+      // Só vai no canal de revendedor: varejo chama a RPC exatamente como antes,
+      // então não quebra enquanto o banco não tiver o parâmetro novo.
+      ...(salesChannel === 'reseller' ? { p_sales_channel: 'reseller' } : {}),
     })
     if (error) throw error
     return { id: data as string }

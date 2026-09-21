@@ -21,10 +21,11 @@ import { usePromotions } from './usePromotions'
 export function MenuPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
+  const salesChannel = useOrderType((state) => state.salesChannel)
   const items = useCart((state) => state.items)
   const navigate = useNavigate()
 
-  const { data: groups, isLoading, isError } = useMenu(store.id, orderType)
+  const { data: groups, isLoading, isError } = useMenu(store.id, orderType, salesChannel)
   const { data: promotions } = usePromotions(store.id)
 
   const rows = useMemo(() => (groups ? buildRows(groups) : []), [groups])
@@ -122,7 +123,9 @@ export function MenuPage() {
             <ArrowLeft size={20} aria-hidden="true" />
           </button>
           <div>
-            <h1 className="font-display text-2xl">{browsingOrderTypeLabel(orderType, store)}</h1>
+            <h1 className="font-display text-2xl">
+              {salesChannel === 'reseller' ? 'Atacado' : browsingOrderTypeLabel(orderType, store)}
+            </h1>
             <p className="font-body text-sm text-background/70">Monte seu pedido com carinho, no seu ritmo.</p>
           </div>
         </div>
@@ -139,7 +142,7 @@ export function MenuPage() {
       <CategoryPillBar categories={categories} active={activeCategory} onSelect={handleSelectCategory} />
 
       <div className="px-4 py-6 pb-24">
-        {groups && promotions && promotions.length > 0 && (
+        {salesChannel === 'retail' && groups && promotions && promotions.length > 0 && (
           <PromotionCarousel promotions={promotions} products={[...groups.values()].flat()} />
         )}
 

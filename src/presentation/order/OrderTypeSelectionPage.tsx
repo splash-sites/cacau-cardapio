@@ -17,6 +17,7 @@ interface OrderTypeOption {
 export function OrderTypeSelectionPage() {
   const store = useCurrentStore()
   const setOrderType = useOrderType((state) => state.setOrderType)
+  const setSalesChannel = useOrderType((state) => state.setSalesChannel)
   const navigate = useNavigate()
 
   const options: OrderTypeOption[] = []
@@ -61,6 +62,7 @@ export function OrderTypeSelectionPage() {
   }
 
   const handleSelect = (orderType: OrderType) => {
+    setSalesChannel('retail')
     setOrderType(orderType)
     navigate(`/${store.slug}/cardapio`)
   }

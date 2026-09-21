@@ -1,5 +1,6 @@
 import { formatProductName } from '../../domain/menu/formatProductName'
 import type { Product } from '../../domain/menu/Product'
+import type { SalesChannel } from '../../domain/order/SalesChannel'
 import type { ProductRepository } from '../../application/menu/ProductRepository'
 import { supabase } from '../supabase/client'
 
@@ -21,6 +22,11 @@ interface PublicProductRow {
   available_dine_in: boolean
   available_pickup: boolean
   available_delivery: boolean
+  // null em produto de varejo (a view só preenche isso com available_reseller = true);
+  // ausentes quando a query do varejo não seleciona as colunas.
+  available_reseller?: boolean | null
+  reseller_track_stock?: boolean | null
+  reseller_stock_quantity?: number | null
 }
 
 function toProduct(row: PublicProductRow): Product {
@@ -42,20 +48,28 @@ function toProduct(row: PublicProductRow): Product {
     availableDineIn: row.available_dine_in,
     availablePickup: row.available_pickup,
     availableDelivery: row.available_delivery,
+    availableReseller: row.available_reseller ?? undefined,
+    resellerTrackStock: row.reseller_track_stock ?? undefined,
+    resellerStockQuantity: row.reseller_stock_quantity ?? undefined,
   }
 }
 
+const RETAIL_COLUMNS =
+  'id, store_id, name, category, category_id, description, image_url, unit, price, lover_price, stock_quantity, track_stock, sort_order, active, available_dine_in, available_pickup, available_delivery'
+
+// Colunas do revendedor só são pedidas no canal de revendedor — o varejo nunca
+// lê coluna que não usa.
+const RESELLER_COLUMNS = `${RETAIL_COLUMNS}, available_reseller, reseller_track_stock, reseller_stock_quantity`
+
 export class SupabaseProductRepository implements ProductRepository {
-  async listProducts(storeId: string): Promise<Product[]> {
+  async listProducts(storeId: string, channel: SalesChannel = 'retail'): Promise<Product[]> {
     const { data, error } = await supabase
       .from('public_products')
-      .select(
-        'id, store_id, name, category, category_id, description, image_url, unit, price, lover_price, stock_quantity, track_stock, sort_order, active, available_dine_in, available_pickup, available_delivery',
-      )
+      .select(channel === 'reseller' ? RESELLER_COLUMNS : RETAIL_COLUMNS)
       .eq('store_id', storeId)
       .order('sort_order', { ascending: true })
     if (error) throw error
-    return (data as PublicProductRow[]).map(toProduct)
+    return (data as unknown as PublicProductRow[]).map(toProduct)
   }
 }
 

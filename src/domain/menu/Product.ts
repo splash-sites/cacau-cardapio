@@ -19,4 +19,10 @@ export interface Product {
   availableDineIn: boolean
   availablePickup: boolean
   availableDelivery: boolean
+  // Só preenchidos quando o produto foi lido pro canal de revendedor
+  // (ProductRepository.listProducts com channel 'reseller'). No varejo ficam
+  // undefined — a query do varejo não seleciona essas colunas de propósito.
+  availableReseller?: boolean
+  resellerTrackStock?: boolean
+  resellerStockQuantity?: number
 }

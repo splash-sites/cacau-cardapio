@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { confirmOrder } from '../../application/order/confirmOrder'
 import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
 import { groupCartItems } from '../../domain/cart/groupCartItems'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
+import { isResellerStockError } from '../../domain/order/resellerStockError'
 import { useCart } from '../cart/useCart'
 import { useCustomer } from '../customer/useCustomer'
 import { formatPrice } from '../menu/formatPrice'
+import { supabaseProductRepository } from '../../infrastructure/menu/SupabaseProductRepository'
 import { supabaseOrderRepository } from '../../infrastructure/order/SupabaseOrderRepository'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { PageShell } from '../shared/PageShell'
@@ -29,8 +32,11 @@ export function ReviewPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
   const tableNumber = useOrderType((state) => state.tableNumber)
+  const salesChannel = useOrderType((state) => state.salesChannel)
   const items = useCart((state) => state.items)
   const clearCart = useCart((state) => state.clear)
+  const refreshStock = useCart((state) => state.refreshStock)
+  const queryClient = useQueryClient()
   const customer = useCustomer((state) => state.customer)
   const navigate = useNavigate()
 
@@ -38,6 +44,7 @@ export function ReviewPage() {
   const [orderId, setOrderId] = useState<string | null>(null)
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [stockRefreshed, setStockRefreshed] = useState(false)
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
   if (!customer) return <Navigate to={`/${store.slug}/identificacao`} replace />
@@ -54,7 +61,8 @@ export function ReviewPage() {
     )
   }
 
-  if (items.length === 0) return <Navigate to={`/${store.slug}/cardapio`} replace />
+  // Depois de um erro de estoque o carrinho pode ter esvaziado — fica na tela pra mostrar o motivo.
+  if (items.length === 0 && status !== 'error') return <Navigate to={`/${store.slug}/cardapio`} replace />
 
   const handleConfirm = async () => {
     setStatus('submitting')
@@ -65,6 +73,7 @@ export function ReviewPage() {
         customer,
         items,
         tableNumber,
+        salesChannel,
       })
       // Precisa montar a mensagem antes do clearCart — depois disso os itens somem do estado.
       if (orderType === 'delivery' && store.whatsappNumber) {
@@ -75,8 +84,23 @@ export function ReviewPage() {
       setOrderId(result.id)
     } catch (err) {
       console.error('confirmOrder falhou:', err)
-      setErrorMessage(extractErrorMessage(err))
+      const message = extractErrorMessage(err)
+      setErrorMessage(message)
+      setStockRefreshed(false)
+      // Saldo acabou entre o carrinho e a confirmação: recarrega o saldo e ajusta o carrinho.
+      if (salesChannel === 'reseller' && isResellerStockError(message)) await refreshResellerStock()
       setStatus('error')
+    }
+  }
+
+  const refreshResellerStock = async () => {
+    try {
+      const fresh = await supabaseProductRepository.listProducts(store.id, 'reseller')
+      refreshStock(fresh)
+      await queryClient.invalidateQueries({ queryKey: ['menu', store.id] })
+      setStockRefreshed(true)
+    } catch (refreshErr) {
+      console.error('refresh de estoque falhou:', refreshErr)
     }
   }
 
@@ -166,15 +190,27 @@ export function ReviewPage() {
       </section>
 
       {status === 'error' && (
-        <p className="font-body text-red-600">
-          Não foi possível confirmar seu pedido. {errorMessage}
-        </p>
+        <div className="flex flex-col gap-2 font-body text-red-600">
+          <p>Não foi possível confirmar seu pedido. {errorMessage}</p>
+          {stockRefreshed && (
+            <>
+              <p>Atualizamos seu carrinho com o estoque disponível agora. Confira as quantidades.</p>
+              <button
+                type="button"
+                onClick={() => navigate(`/${store.slug}/carrinho`)}
+                className="h-11 min-h-11 rounded-md border border-secondary/30 bg-white font-medium text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                Revisar carrinho
+              </button>
+            </>
+          )}
+        </div>
       )}
 
       <button
         type="button"
         onClick={handleConfirm}
-        disabled={status === 'submitting'}
+        disabled={status === 'submitting' || items.length === 0}
         className="h-11 min-h-11 rounded-md bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
       >
         {status === 'submitting' ? 'Confirmando…' : 'Confirmar pedido'}

@@ -49,6 +49,21 @@ describe('confirmOrder', () => {
     expect(repo.createOrder).not.toHaveBeenCalled()
   })
 
+  it('rejeita pedido de revendedor em dine_in', async () => {
+    const repo: OrderRepository = { createOrder: vi.fn() }
+    await expect(confirmOrder(repo, makeInput({ orderType: 'dine_in', salesChannel: 'reseller' }))).rejects.toThrow(
+      'revendedor',
+    )
+    expect(repo.createOrder).not.toHaveBeenCalled()
+  })
+
+  it('repassa o canal de revendedor pro repositório', async () => {
+    const repo: OrderRepository = { createOrder: vi.fn().mockResolvedValue({ id: 'order-1' }) }
+    const input = makeInput({ salesChannel: 'reseller' })
+    await confirmOrder(repo, input)
+    expect(repo.createOrder).toHaveBeenCalledWith(input)
+  })
+
   it('rejeita delivery sem endereço', async () => {
     const repo: OrderRepository = { createOrder: vi.fn() }
     const input = makeInput({
