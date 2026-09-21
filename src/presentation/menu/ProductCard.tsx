@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import type { Product } from '../../domain/menu/Product'
-import { resizedImageUrl } from '../shared/resizedImageUrl'
 import { formatPrice } from './formatPrice'
 import { ProductDetailModal } from './ProductDetailModal'
 
@@ -13,7 +12,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="h-[78px] w-[78px] shrink-0 overflow-hidden rounded-xl bg-secondary/10">
         {product.imageUrl && (
           <img
-            src={resizedImageUrl(product.imageUrl, 78, 78) ?? undefined}
+            src={product.imageUrl ?? undefined}
             alt=""
             loading="lazy"
             width={78}

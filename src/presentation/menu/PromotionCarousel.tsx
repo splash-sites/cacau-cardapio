@@ -4,7 +4,6 @@ import type { Promotion } from '../../domain/promotion/Promotion'
 import { distributePromotionDiscount } from '../../domain/promotion/promotionPricing'
 import { visiblePromotions } from '../../domain/promotion/visiblePromotions'
 import { prefersReducedMotion } from '../shared/prefersReducedMotion'
-import { resizedImageUrl } from '../shared/resizedImageUrl'
 import { formatPrice } from './formatPrice'
 import { ProductDetailModal } from './ProductDetailModal'
 import { PromotionDetailModal } from './PromotionDetailModal'
@@ -79,7 +78,7 @@ export function PromotionCarousel({ promotions, products }: { promotions: Promot
         className="relative block h-40 w-full cursor-pointer overflow-hidden rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <img
-          src={resizedImageUrl(promotion.imageUrl, 384, 160) ?? undefined}
+          src={promotion.imageUrl ?? undefined}
           alt=""
           loading="lazy"
           className="absolute inset-0 h-full w-full object-cover"
