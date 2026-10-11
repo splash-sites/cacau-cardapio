@@ -1,13 +1,14 @@
 import { expect, test, type Page } from '@playwright/test'
+import { E2E_STORE_SLUG } from './staging'
 
 // Fluxo pickup/delivery unificado (CLAUDE.md "Padrões de frontend" / etapa 2 do
 // checkout): card "Para Levar/Entrega" -> orderType chega como 'pickup' ->
 // checkout mostra o toggle retirar/receber só quando a loja aceita os dois.
 // Testa o toggle indo e voltando (mostra/esconde endereço) e fecha o fluxo
-// pela opção "Retirar no balcão" — nenhum produto desta loja tem
+// pela opção "Retirar no balcão" — nenhum produto da loja de teste tem
 // available_delivery=true hoje, então "Receber em casa" fica só coberto até
 // o toggle, sem confirmar pedido por esse braço.
-const STORE_SLUG = 'cacau-show-capao'
+const STORE_SLUG = E2E_STORE_SLUG
 const VALID_TEST_CPF = '111.444.777-35'
 
 async function scrollUntilVisible(page: Page, locator: ReturnType<Page['getByRole']>) {

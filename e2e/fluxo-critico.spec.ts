@@ -1,12 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
+import { E2E_STORE_SLUG } from './staging'
 
 // Fluxo crítico completo (CLAUDE.md, seção Testes): entrar via mesa (QR) →
 // carrinho → identificação (nome/CPF/telefone) → confirmar pedido → status
-// muda. Roda contra o banco Supabase real (não tem staging ainda, ver
-// CLAUDE.md "Fase 1") — usa loja e produto reais, sem variação/adicional
-// (Água), pra não depender de estoque de teste específico. Gera um pedido
-// real em produção, marcado com nome de teste pra ficar óbvio no admin.
-const STORE_SLUG = 'cacau-show-capao'
+// muda. Roda contra o banco de STAGING (e2e/staging.ts, playwright.config.ts),
+// na loja de teste `loja-e2e` do seed, com produto sem variação/adicional
+// (Água). Gera um pedido no staging, com nome de teste pra ficar óbvio no painel.
+const STORE_SLUG = E2E_STORE_SLUG
 const TABLE_NUMBER = '12'
 const VALID_TEST_CPF = '111.444.777-35' // CPF com dígito verificador válido, não é de pessoa real
 

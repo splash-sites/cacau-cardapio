@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
+import { E2E_STORE_SLUG } from './staging'
 
 // Branch de erro do ReviewPage (status === 'error') nunca tinha sido
 // exercitado. Simula a RPC confirm_order recusando o pedido (via
-// page.route, sem gerar pedido real em produção) pra ver exatamente o que
+// page.route, sem gerar pedido nenhum) pra ver exatamente o que
 // o cliente enxerga quando a confirmação falha.
-const STORE_SLUG = 'cacau-show-capao'
+const STORE_SLUG = E2E_STORE_SLUG
 const TABLE_NUMBER = '12'
 const VALID_TEST_CPF = '111.444.777-35'
 

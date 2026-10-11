@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { E2E_STORE_SLUG } from './staging'
 
 // Combo com desconto, cobrindo o caso mais complexo do domínio: um item do
 // combo (Fondue) com 2 grupos de variação obrigatórios (sabor de fruta +
 // sabor do chocolate) e outro item (Água) sem variação nenhuma, com desconto
-// fixed_amount aplicado sobre a soma dos dois. Usa a promoção de teste já
-// existente em produção ("TESTE - Fondue com desconto").
-const STORE_SLUG = 'cacau-show-capao'
+// fixed_amount aplicado sobre a soma dos dois. Usa a promoção de teste
+// do seed de staging ("TESTE - Fondue com desconto", loja `loja-e2e`).
+const STORE_SLUG = E2E_STORE_SLUG
 const TABLE_NUMBER = '12'
 const VALID_TEST_CPF = '111.444.777-35'
 
@@ -16,7 +17,7 @@ test('promoção de combo → variação obrigatória em 2 grupos → carrinho a
   await page.goto(`/${STORE_SLUG}/mesa/${TABLE_NUMBER}`)
   await expect(page).toHaveURL(`/${STORE_SLUG}/cardapio`)
 
-  // Loja pode ter mais de 1 promoção de Fondue em produção (o carrossel roda
+  // Loja pode ter mais de 1 promoção de Fondue (o carrossel roda
   // a promoção que estiver ativa naquele momento) — em vez de assumir posição
   // fixa, navega pelas abas até achar o título certo. Se só existir 1
   // promoção, o carrossel nem mostra aba, e o slide já é o certo direto.
@@ -46,6 +47,9 @@ test('promoção de combo → variação obrigatória em 2 grupos → carrinho a
 
   await page.getByRole('button', { name: /Ver carrinho/ }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/carrinho`)
+  // Troca de tela tem fade: o carrossel do cardápio (título "TESTE - Fondue…")
+  // ainda está no DOM por um instante — espera sair antes de procurar "Fondue".
+  await expect(comboSlide).toHaveCount(0)
   await expect(page.getByText('Combo', { exact: true })).toBeVisible()
   await expect(page.getByText(/Fondue/)).toBeVisible()
   await expect(page.getByText(/Água/)).toBeVisible()

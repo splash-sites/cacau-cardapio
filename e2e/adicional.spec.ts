@@ -1,12 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
+import { E2E_STORE_SLUG } from './staging'
 
 // Fluxo de adicional (selection_type 'multiple', sem max_quantity) nunca
 // tinha passado por E2E — só variação tinha sido coberta. Fondue é o único
-// produto da loja com grupo de adicional hoje ("Adc Fondue": Bytes,
+// produto da loja de teste (seed) com grupo de adicional ("Adc Fondue": Bytes,
 // Granulado), então também exercita variação obrigatória junto (mesmo
 // produto tem os 2 grupos), sem depender de promoção/combo desta vez —
 // abre o ProductDetailModal normal, não o de combo.
-const STORE_SLUG = 'cacau-show-capao'
+const STORE_SLUG = E2E_STORE_SLUG
 const TABLE_NUMBER = '12'
 const VALID_TEST_CPF = '111.444.777-35'
 
