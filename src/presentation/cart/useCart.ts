@@ -3,7 +3,8 @@ import type { AddonOption } from '../../domain/addon/AddonOption'
 import * as Cart from '../../domain/cart/Cart'
 import type { ComboLineInput } from '../../domain/cart/Cart'
 import type { CartItem } from '../../domain/cart/CartItem'
-import { refreshCartStock } from '../../domain/cart/resellerStock'
+import type { SalesChannel } from '../../domain/order/SalesChannel'
+import { refreshCartStock } from '../../domain/cart/stock'
 import type { Product } from '../../domain/menu/Product'
 import type { VariationOption } from '../../domain/variation/VariationOption'
 
@@ -16,7 +17,7 @@ interface CartState {
   removeItem: (itemId: string) => void
   removeComboGroup: (comboGroupId: string) => void
   setNote: (itemId: string, note: string) => void
-  refreshStock: (freshProducts: Product[]) => void
+  refreshStock: (freshProducts: Product[], channel: SalesChannel) => void
   clear: () => void
 }
 
@@ -31,6 +32,7 @@ export const useCart = create<CartState>((set) => ({
   removeItem: (itemId) => set((state) => ({ items: Cart.removeItem(state.items, itemId) })),
   removeComboGroup: (comboGroupId) => set((state) => ({ items: Cart.removeComboGroup(state.items, comboGroupId) })),
   setNote: (itemId, note) => set((state) => ({ items: Cart.setItemNote(state.items, itemId, note) })),
-  refreshStock: (freshProducts) => set((state) => ({ items: refreshCartStock(state.items, freshProducts) })),
+  refreshStock: (freshProducts, channel) =>
+    set((state) => ({ items: refreshCartStock(state.items, freshProducts, channel) })),
   clear: () => set({ items: [] }),
 }))

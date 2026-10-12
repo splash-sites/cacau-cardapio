@@ -80,8 +80,8 @@ Rodando junto com o painel: cardápio em `--port 5175`, painel em `--port 5176` 
 - Combo/desconto: promoção = produto principal + itens extras (`promotion_combo_items`) + desconto opcional (percentual ou valor fixo), validado dentro de `confirm_order`. Desconto vale também sobre o Lover.
 
 ### Estoque
-- **Varejo**: chave por produto `track_stock`. **Decidido (a implementar):** ligada = conta unidades (pedido desconta, cancelamento devolve, recusa pedido acima do saldo); desligada = ignora estoque. **Hoje** a chave ligada só bloqueia quando o saldo já é 0 — não desconta.
-- **Revenda (atacado)**: estoque próprio (`reseller_stock_quantity`, chave `reseller_track_stock`), desconta e devolve sozinho por trigger. Já funciona.
+- **Varejo**: chave por produto `track_stock`. Ligada = conta unidades em `stock_quantity`: pedido desconta, editar item ajusta, remover item ou cancelar devolve, pedido acima do saldo é recusado (`Estoque insuficiente para "X"`) — triggers `order_items_retail_stock_ins_upd`/`_del` e `orders_retail_stock_restore`, só pedido `sales_channel = 'retail'`. Cada item guarda quanto descontou (`order_items.retail_stock_debited`) e só isso volta: pedido feito com o controle desligado não devolve nada. Desligada = ignora estoque. (Staging desde 2026-10-11; produção pendente — backlog.)
+- **Revenda (atacado)**: estoque próprio (`reseller_stock_quantity`, chave `reseller_track_stock`), mesma regra, triggers `order_items_reseller_stock`/`orders_reseller_stock_restore`. Um canal nunca mexe no saldo do outro.
 
 ### Canais e cardápio
 - Tipos de pedido: `dine_in` (mesa/cafeteria), `pickup` (retirada), `delivery` (entrega). Loja liga cada um em `stores.supports_*`.
@@ -121,7 +121,7 @@ React 19 + Vite 8 + TypeScript `strict` · Tailwind v4 (`@tailwindcss/vite`, tok
 - **Só lê views `public_*`** (+ a tabela `categories`, liberada por RLS pra leitura das ativas). Nunca a tabela `products` (tem `cost_price`). Precisa de campo que só existe na tabela? Ele entra na view (migration no painel), não se lê a tabela.
 - **Escrita só por função**: `confirm_order` (preço recalculado no servidor; o front manda só ids, quantidades, observação, adicionais, variações e `promotion_id` do combo).
 - Cardápio filtrado pelo tipo escolhido: mesa → `available_dine_in`; retirada/entrega → `available_pickup`; revenda → `available_reseller`. Produto inativo, indisponível no canal ou esgotado não aparece / fica desabilitado. Promoção cujo produto sumiu também some (`visiblePromotions`).
-- **Carrinho**: mesma combinação produto + variação + adicionais = mesma linha; combinação diferente = linha separada. Na revenda, quantidade limitada ao saldo do canal; erro de estoque recarrega o saldo e ajusta o carrinho.
+- **Carrinho**: mesma combinação produto + variação + adicionais = mesma linha; combinação diferente = linha separada. Quantidade limitada ao saldo do canal (varejo: `stock_quantity`; revenda: `reseller_stock_quantity`; só se o produto controla estoque) — `domain/cart/stock.ts`; erro de estoque na confirmação recarrega o saldo e ajusta o carrinho.
 - **Preço Lover** mostrado lado a lado em todo lugar que mostra preço (cardápio, carrinho, revisão, mensagem de WhatsApp).
 - **Acompanhamento**: polling de `get_order_status` a cada 5s até `finalized`/`cancelled` (sem Realtime). Recarregar a página perde a tela de acompanhamento; o pedido continua em "Meus pedidos".
 - **WhatsApp**: só pedido `delivery` com `whatsapp_number` na loja gera link `wa.me` com o resumo. É atalho; a fonte de verdade é o banco.

@@ -6,7 +6,7 @@ import { confirmOrder } from '../../application/order/confirmOrder'
 import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
 import { groupCartItems } from '../../domain/cart/groupCartItems'
 import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
-import { isResellerStockError } from '../../domain/order/resellerStockError'
+import { isStockError, stockErrorMessage } from '../../domain/order/stockError'
 import { useCart } from '../cart/useCart'
 import { useCustomer } from '../customer/useCustomer'
 import { formatPrice } from '../menu/formatPrice'
@@ -85,18 +85,19 @@ export function ReviewPage() {
     } catch (err) {
       console.error('confirmOrder falhou:', err)
       const message = extractErrorMessage(err)
-      setErrorMessage(message)
+      const stockError = isStockError(message)
+      setErrorMessage(stockError ? stockErrorMessage(message) : message)
       setStockRefreshed(false)
       // Saldo acabou entre o carrinho e a confirmação: recarrega o saldo e ajusta o carrinho.
-      if (salesChannel === 'reseller' && isResellerStockError(message)) await refreshResellerStock()
+      if (stockError) await refreshCartWithFreshStock()
       setStatus('error')
     }
   }
 
-  const refreshResellerStock = async () => {
+  const refreshCartWithFreshStock = async () => {
     try {
-      const fresh = await supabaseProductRepository.listProducts(store.id, 'reseller')
-      refreshStock(fresh)
+      const fresh = await supabaseProductRepository.listProducts(store.id, salesChannel)
+      refreshStock(fresh, salesChannel)
       await queryClient.invalidateQueries({ queryKey: ['menu', store.id] })
       setStockRefreshed(true)
     } catch (refreshErr) {

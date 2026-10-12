@@ -3,7 +3,7 @@ import { ArrowLeft, X } from 'lucide-react'
 import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
 import type { CartItem } from '../../domain/cart/CartItem'
 import { groupCartItems } from '../../domain/cart/groupCartItems'
-import { remainingResellerStock } from '../../domain/cart/resellerStock'
+import { remainingStock } from '../../domain/cart/stock'
 import { browsingOrderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { useOrderType } from '../order/useOrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
@@ -82,9 +82,9 @@ export function CartPage() {
                 const variationNames = variations.map((variation) => variation.name)
                 const addonNames = addons.map((addon) => addon.name)
                 const detailLine = [...variationNames, ...addonNames].join(', ')
-                // Revendedor: o saldo do produto limita o carrinho (soma de todas as linhas dele).
-                const remainingStock = salesChannel === 'reseller' ? remainingResellerStock(items, product) : null
-                const atStockLimit = remainingStock !== null && remainingStock <= 0
+                // O saldo do produto no canal limita o carrinho (soma de todas as linhas dele).
+                const stockLeft = remainingStock(items, product, salesChannel)
+                const atStockLimit = stockLeft !== null && stockLeft <= 0
 
                 return (
                   <li key={id} className="relative rounded-2xl bg-white p-3 shadow-sm">

@@ -8,7 +8,7 @@ import {
   resolveSelectedAddons,
 } from '../../domain/addon/addonSelection'
 import { cartItemId } from '../../domain/cart/Cart'
-import { remainingResellerStock } from '../../domain/cart/resellerStock'
+import { remainingStock } from '../../domain/cart/stock'
 import type { Product } from '../../domain/menu/Product'
 import {
   isVariationSelectionComplete,
@@ -99,10 +99,10 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
     setDragging(false)
   }
 
-  // Só o revendedor tem saldo próprio limitando o carrinho (null = sem limite).
-  const remainingStock = salesChannel === 'reseller' ? remainingResellerStock(cartItems, product) : null
-  const maxQuantity = remainingStock ?? Infinity
-  const outOfStock = remainingStock !== null && remainingStock <= 0
+  // Saldo do produto no canal limitando o carrinho (null = sem limite).
+  const stockLeft = remainingStock(cartItems, product, salesChannel)
+  const maxQuantity = stockLeft ?? Infinity
+  const outOfStock = stockLeft !== null && stockLeft <= 0
 
   const groups = addonGroups ?? []
   const varGroups = variationGroups ?? []
@@ -245,9 +245,9 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
                 </button>
               </div>
             </div>
-            {remainingStock !== null && (
+            {stockLeft !== null && (
               <p className="text-right font-body text-xs text-foreground/60">
-                {outOfStock ? 'Você já pediu todo o estoque disponível.' : `Restam ${remainingStock} em estoque.`}
+                {outOfStock ? 'Você já pediu todo o estoque disponível.' : `Restam ${stockLeft} em estoque.`}
               </p>
             )}
           </div>
