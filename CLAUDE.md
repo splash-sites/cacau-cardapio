@@ -55,7 +55,7 @@ Rodando junto com o painel: cardápio em `--port 5175`, painel em `--port 5176` 
 - Filtro só no front não é segurança — quem garante é RLS + checagem dentro da função.
 - **Cliente final nunca lê tabela de pedido.** Lê só as views `public_*` (sem `cost_price`/`external_code`) e escreve/consulta só por função: `confirm_order`, `get_order_status` (exige id do pedido + CPF), `list_orders_by_cpf` (sem endereço).
 - **Funções do banco**: estão executáveis por qualquer um (`PUBLIC`), então **cada função confere por dentro quem chamou** (papel e loja). Testado 2026-10-11: todas recusam chamada de outra loja e de anônimo. Função nova segue a mesma regra; funções só de sistema (`copy_catalog`, `reseller_stock_apply`) têm `revoke` e só rodam via `service_role`/trigger.
-- **Edge Functions** (rodam com `service_role`, sempre validam o JWT de quem chamou antes): `setup-first-admin`, `create-admin-user`, `update-admin-user`, `delete-admin-user`, `copy-catalog`. Só `copy-catalog` está versionada (`docs/supabase/copy-catalog/`) — as outras 4 precisam ser baixadas pro repo (backlog).
+- **Edge Functions** (rodam com `service_role`, sempre validam o JWT de quem chamou antes; `verify_jwt` ligado em todas): `setup-first-admin`, `create-admin-user`, `update-admin-user`, `delete-admin-user`, `copy-catalog`. Fonte de verdade = `painel-adm-cacau/supabase/functions/`; mesmo fluxo do banco (staging primeiro, depois produção — comandos no `supabase/README.md`). Testado 2026-10-11 no staging: sem login → 401, `store_admin` → 403.
 - `service_role` nunca no front.
 - Antes de dar feature como pronta no painel: rodar o agente `security-sweep` (`painel-adm-cacau/.claude/agents/`). Achado CRÍTICO/ALTO bloqueia.
 
