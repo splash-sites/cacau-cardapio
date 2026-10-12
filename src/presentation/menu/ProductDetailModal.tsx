@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { Minus, Plus } from 'lucide-react'
+import type { AddonGroup } from '../../domain/addon/AddonGroup'
 import {
   type AddonSelections,
   addonSelectionsLoverTotal,
@@ -10,8 +11,8 @@ import {
 import { cartItemId } from '../../domain/cart/Cart'
 import { remainingStock } from '../../domain/cart/stock'
 import type { Product } from '../../domain/menu/Product'
+import type { VariationGroup } from '../../domain/variation/VariationGroup'
 import {
-  isVariationSelectionComplete,
   resolveBasePrice,
   resolveSelectedVariations,
   selectVariationOption,
@@ -19,17 +20,27 @@ import {
 } from '../../domain/variation/variationSelection'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
+import { FixedBottomBar } from '../shared/FixedBottomBar'
+import { ProductThumb } from '../shared/ProductThumb'
+import { StepHeader } from '../shared/StepHeader'
+import { primaryButtonClass, stepTitleClass } from '../shared/ui'
 import { AddonGroupSection } from './AddonGroupSection'
+import { addonGroupHint } from './addonGroupHint'
 import { formatPrice } from './formatPrice'
 import { ImageLightbox } from './ImageLightbox'
 import { useProductAddons } from './useProductAddons'
 import { useProductVariations } from './useProductVariations'
 import { VariationGroupSection } from './VariationGroupSection'
 
-const TRANSITION_MS = 300
-const UNMOUNT_DELAY_MS = 310
-const SWIPE_CLOSE_THRESHOLD_PX = 90
+const TRANSITION_MS = 260
 
+type Step = { kind: 'variation'; group: VariationGroup } | { kind: 'addon'; group: AddonGroup }
+
+/**
+ * Produto em tela cheia, uma pergunta por etapa: cada grupo de variação (obrigatório)
+ * e cada grupo de adicional (opcional) vira um passo. Quantidade e observação ficam
+ * no último passo, junto do botão de adicionar. Produto sem opções é um passo só.
+ */
 export function ProductDetailModal({ product, onClose }: { product: Product; onClose: () => void }) {
   const addItem = useCart((state) => state.addItem)
   const setNote = useCart((state) => state.setNote)
@@ -42,13 +53,11 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
   const optionsLoadError = addonsError || variationsError
 
   const [visible, setVisible] = useState(false)
-  const [dragY, setDragY] = useState(0)
-  const [dragging, setDragging] = useState(false)
-  const dragStartY = useRef<number | null>(null)
-
+  const [stepIndex, setStepIndex] = useState(0)
   const [selections, setSelections] = useState<AddonSelections>({})
   const [variationSelections, setVariationSelections] = useState<VariationSelections>({})
   const [notes, setNotes] = useState('')
+  const [showNotes, setShowNotes] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
@@ -67,8 +76,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'Escape') return
-      if (lightboxOpen) return
+      if (event.key !== 'Escape' || lightboxOpen) return
       handleClose()
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -78,36 +86,33 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
 
   function handleClose() {
     setVisible(false)
-    setTimeout(onClose, UNMOUNT_DELAY_MS)
+    setTimeout(onClose, TRANSITION_MS)
   }
 
-  function handleTouchStart(event: React.TouchEvent) {
-    dragStartY.current = event.touches[0].clientY
-    setDragging(true)
-  }
-
-  function handleTouchMove(event: React.TouchEvent) {
-    if (dragStartY.current === null) return
-    const delta = event.touches[0].clientY - dragStartY.current
-    if (delta > 0) setDragY(delta)
-  }
-
-  function handleTouchEnd() {
-    if (dragY > SWIPE_CLOSE_THRESHOLD_PX) handleClose()
-    else setDragY(0)
-    dragStartY.current = null
-    setDragging(false)
-  }
+  const groups = addonGroups ?? []
+  const varGroups = variationGroups ?? []
+  const steps: Step[] = [
+    ...varGroups.map((group): Step => ({ kind: 'variation', group })),
+    ...groups.map((group): Step => ({ kind: 'addon', group })),
+  ]
+  const totalSteps = Math.max(steps.length, 1)
+  const step: Step | undefined = steps[stepIndex]
+  const isLastStep = stepIndex >= totalSteps - 1
 
   // Saldo do produto no canal limitando o carrinho (null = sem limite).
   const stockLeft = remainingStock(cartItems, product, salesChannel)
   const maxQuantity = stockLeft ?? Infinity
   const outOfStock = stockLeft !== null && stockLeft <= 0
 
-  const groups = addonGroups ?? []
-  const varGroups = variationGroups ?? []
   const variations = resolveSelectedVariations(variationSelections, varGroups)
-  const variationsComplete = isVariationSelectionComplete(variationSelections, varGroups)
+  const stepComplete = step?.kind !== 'variation' || variationSelections[step.group.id] !== undefined
+
+  const addonsTotal = addonSelectionsTotal(selections, groups)
+  const addonsLoverTotal = addonSelectionsLoverTotal(selections, groups)
+  const { regular: baseRegular, lover: baseLover } = resolveBasePrice(product, variations)
+  const regularTotal = (baseRegular + addonsTotal) * quantity
+  const loverTotal = (baseLover + addonsLoverTotal) * quantity
+  const choicesSummary = [...variations.map((variation) => variation.name), ...resolveSelectedAddons(selections, groups).map((addon) => addon.name)]
 
   function handleAdd() {
     const selectedAddons = resolveSelectedAddons(selections, groups)
@@ -116,169 +121,146 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
     handleClose()
   }
 
-  const addonsTotal = addonSelectionsTotal(selections, groups)
-  const addonsLoverTotal = addonSelectionsLoverTotal(selections, groups)
-  const { regular: baseRegular, lover: baseLover } = resolveBasePrice(product, variations)
-  const loverTotal = (baseLover + addonsLoverTotal) * quantity
-  const regularTotal = (baseRegular + addonsTotal) * quantity
+  function handlePrimary() {
+    if (isLastStep) handleAdd()
+    else setStepIndex((index) => index + 1)
+  }
+
+  const primaryDisabled = optionsLoading || optionsLoadError || !stepComplete || (isLastStep && outOfStock)
+  const hasLover = loverTotal < regularTotal
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center" role="presentation">
-      <div
-        onClick={handleClose}
-        style={{ transitionDuration: `${TRANSITION_MS}ms` }}
-        className={`absolute inset-0 bg-black/50 transition-opacity ease-out motion-reduce:transition-none ${visible ? 'opacity-100' : 'opacity-0'}`}
-      />
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={product.name}
+      style={{ transitionDuration: `${TRANSITION_MS}ms` }}
+      className={`fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-bg text-ink transition-opacity ease-out motion-reduce:transition-none ${
+        visible ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
+      <div className="mx-auto flex min-h-full w-full max-w-[430px] flex-col pb-44">
+        <StepHeader
+          step={stepIndex + 1}
+          total={totalSteps}
+          onBack={() => (stepIndex > 0 ? setStepIndex((index) => index - 1) : handleClose())}
+          backLabel={stepIndex > 0 ? 'Voltar' : 'Voltar ao cardápio'}
+        />
 
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={product.name}
-        style={{
-          transitionDuration: `${TRANSITION_MS}ms`,
-          transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
-        }}
-        className={`relative z-10 flex max-h-[88vh] w-full sm:max-w-sm flex-col overflow-hidden rounded-t-[20px] bg-background shadow-xl ease-out ${
-          dragging ? '' : 'transition-transform motion-reduce:transition-none'
-        }`}
-      >
-        <div
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className="flex shrink-0 justify-center pb-1 pt-2"
-        >
-          <span className="h-1.5 w-10 rounded-full bg-foreground/20" aria-hidden="true" />
-        </div>
-
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          <div className="relative aspect-square w-full shrink-0 bg-secondary/10">
-            {product.imageUrl && (
-              <button
-                type="button"
-                onClick={() => setLightboxOpen(true)}
-                aria-label={`Ver imagem ampliada de ${product.name}`}
-                className="block h-full w-full cursor-pointer"
-              >
-                <img
-                  src={product.imageUrl ?? undefined}
-                  alt=""
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={handleClose}
-              aria-label="Fechar"
-              className="absolute right-2 top-2 z-10 flex h-11 w-11 min-h-11 items-center justify-center rounded-full bg-white/70 text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-4 px-4 py-4">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-accent">{product.name}</h2>
-              {product.description && (
-                <p className="mt-1 font-body text-sm text-foreground/70">{product.description}</p>
-              )}
-              <p className="mt-1 font-body text-sm">
-                <span className="font-medium text-primary">Lover {formatPrice(baseLover)}</span>
-                <span className="text-foreground/40"> | </span>
-                <span className="text-foreground/60">Não Lover {formatPrice(baseRegular)}</span>
-              </p>
-            </div>
-
-            {varGroups.map((group) => (
-              <VariationGroupSection
-                key={group.id}
-                group={group}
-                selectedOptionId={variationSelections[group.id]}
-                onSelect={(optionId) =>
-                  setVariationSelections((current) => selectVariationOption(current, group.id, optionId))
-                }
-              />
-            ))}
-
-            {groups.map((group) => (
-              <AddonGroupSection
-                key={group.id}
-                group={group}
-                selections={selections}
-                onChange={setSelections}
-              />
-            ))}
-
-            <label className="flex flex-col gap-1">
-              <span className="font-body text-xs font-bold uppercase tracking-wide text-secondary">Observações</span>
-              <textarea
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                placeholder="Ex: sem açúcar, pouco gelo..."
-                rows={2}
-                className="w-full rounded-xl border border-secondary/15 bg-white px-3 py-2 font-body text-sm placeholder:text-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              />
-            </label>
-
-            <div className="flex items-center justify-between">
-              <span className="font-body text-xs font-bold uppercase tracking-wide text-secondary">Quantidade</span>
-              <div className="flex h-11 items-center gap-3 rounded-full bg-primary/10">
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  aria-label="Diminuir quantidade"
-                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                >
-                  −
-                </button>
-                <span className="min-w-4 text-center font-body font-medium text-foreground">{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
-                  disabled={quantity >= maxQuantity}
-                  aria-label="Aumentar quantidade"
-                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            {stockLeft !== null && (
-              <p className="text-right font-body text-xs text-foreground/60">
-                {outOfStock ? 'Você já pediu todo o estoque disponível.' : `Restam ${stockLeft} em estoque.`}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="shrink-0 border-t border-secondary/15 bg-background px-4 py-3">
-          <div className="mb-2 flex items-center justify-between font-body text-sm">
-            <span className="font-medium text-primary">Cacau Lovers* {formatPrice(loverTotal)}</span>
-            <span className="text-foreground/50">{formatPrice(regularTotal)}</span>
-          </div>
-          {optionsLoadError ? (
-            <p className="mb-2 text-center font-body text-xs text-red-600">
-              Não foi possível carregar as opções deste produto. Tente fechar e abrir de novo.
-            </p>
-          ) : optionsLoading ? (
-            <p className="mb-2 text-center font-body text-xs text-foreground/50">Carregando opções…</p>
+        <div className="flex flex-col gap-3.5 px-5 pt-5">
+          {stepIndex === 0 ? (
+            <ProductIntro product={product} onOpenImage={() => setLightboxOpen(true)} compact={!!step} />
           ) : (
-            !variationsComplete && (
-              <p className="mb-2 text-center font-body text-xs text-secondary">Escolha as opções acima pra continuar</p>
-            )
+            <span className="text-sm text-muted">
+              {[product.name, ...variations.map((variation) => variation.name)].join(', ')}
+            </span>
           )}
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={!variationsComplete || optionsLoadError || optionsLoading || outOfStock}
-            className="h-11 min-h-11 w-full rounded-2xl bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
-          >
-            Adicionar ao pedido
-          </button>
+
+          {step && (
+            <div className="flex flex-col gap-1">
+              <h2 className={stepTitleClass}>{step.group.name}</h2>
+              <span className="text-sm text-muted">
+                {step.kind === 'variation' ? 'Escolha uma opção' : addonGroupHint(step.group)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3 px-5 pt-6">
+          {optionsLoading && <p className="text-muted">Carregando opções…</p>}
+          {optionsLoadError && (
+            <p className="text-danger">Não foi possível carregar as opções deste produto. Volte e abra de novo.</p>
+          )}
+
+          {step?.kind === 'variation' && (
+            <VariationGroupSection
+              group={step.group}
+              selectedOptionId={variationSelections[step.group.id]}
+              onSelect={(optionId) =>
+                setVariationSelections((current) => selectVariationOption(current, step.group.id, optionId))
+              }
+            />
+          )}
+
+          {step?.kind === 'addon' && (
+            <AddonGroupSection group={step.group} selections={selections} onChange={setSelections} />
+          )}
+
+          {isLastStep && !optionsLoading && !optionsLoadError && (
+            <div className="mt-3 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[15px] font-semibold">Quantidade</span>
+                <div className="flex h-12 items-center rounded-[14px] border-[1.5px] border-line-strong">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                    disabled={quantity <= 1}
+                    aria-label="Diminuir quantidade"
+                    className="grid h-12 w-12 place-items-center disabled:opacity-40"
+                  >
+                    <Minus size={18} aria-hidden="true" />
+                  </button>
+                  <span className="w-6 text-center font-semibold tabular-nums">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((current) => Math.min(maxQuantity, current + 1))}
+                    disabled={quantity >= maxQuantity}
+                    aria-label="Aumentar quantidade"
+                    className="grid h-12 w-12 place-items-center disabled:opacity-40"
+                  >
+                    <Plus size={18} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+              {stockLeft !== null && (
+                <p className="text-right text-[13px] text-muted">
+                  {outOfStock ? 'Você já pediu todo o estoque disponível.' : `Restam ${stockLeft} em estoque.`}
+                </p>
+              )}
+
+              {showNotes || notes ? (
+                <label className="flex flex-col gap-1.5 text-sm text-muted">
+                  Observação
+                  <textarea
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder="Ex: sem açúcar, pouco gelo"
+                    rows={2}
+                    autoFocus={showNotes && !notes}
+                    className="w-full resize-none rounded-[14px] border-[1.5px] border-line-strong bg-surface-2 px-4 py-3 text-base text-ink placeholder:text-faint focus:border-caramel focus:outline-none"
+                  />
+                </label>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowNotes(true)}
+                  className="self-start py-1 text-[15px] text-muted underline-offset-4 hover:text-ink hover:underline"
+                >
+                  Adicionar observação
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      <FixedBottomBar className="flex flex-col gap-2.5">
+        {isLastStep && !optionsLoading && (
+          <div className="flex items-baseline justify-between gap-3 text-[15px] tabular-nums">
+            <span className="min-w-0 truncate text-muted">
+              {quantity} {product.name}
+              {choicesSummary.length > 0 && ` com ${choicesSummary.join(', ')}`}
+            </span>
+            <span className="shrink-0 text-right">
+              {formatPrice(regularTotal)}
+              {hasLover && <span className="block text-[13px] text-caramel">Lover {formatPrice(loverTotal)}</span>}
+            </span>
+          </div>
+        )}
+        <button type="button" onClick={handlePrimary} disabled={primaryDisabled} className={primaryButtonClass}>
+          {isLastStep ? 'Adicionar ao pedido' : 'Continuar'}
+        </button>
+      </FixedBottomBar>
 
       {lightboxOpen && product.imageUrl && (
         <ImageLightbox
@@ -290,5 +272,63 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
       )}
     </div>,
     document.body,
+  )
+}
+
+/** Primeira etapa: foto (ou miniatura), nome, descrição e preço do produto. */
+function ProductIntro({
+  product,
+  onOpenImage,
+  compact,
+}: {
+  product: Product
+  onOpenImage: () => void
+  compact: boolean
+}) {
+  const hasLover = product.loverPrice < product.price
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3.5">
+        {product.imageUrl ? (
+          <button type="button" onClick={onOpenImage} aria-label={`Ver foto de ${product.name}`} className="rounded-[18px]">
+            <ProductThumb name={product.name} imageUrl={product.imageUrl} size={64} />
+          </button>
+        ) : (
+          <ProductThumb name={product.name} imageUrl={null} size={64} />
+        )}
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[17px] font-semibold">{product.name}</span>
+          {product.description && <span className="text-[13px] text-muted">{product.description}</span>}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {product.imageUrl ? (
+        <button
+          type="button"
+          onClick={onOpenImage}
+          aria-label={`Ver foto de ${product.name}`}
+          className="aspect-[4/3] w-full overflow-hidden rounded-3xl bg-tile"
+        >
+          <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
+        </button>
+      ) : (
+        <div className="grid aspect-[4/3] w-full place-items-center rounded-3xl bg-tile font-display text-7xl text-caramel" aria-hidden="true">
+          {product.name.trim().charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div className="flex flex-col gap-1.5">
+        <h2 className={stepTitleClass}>{product.name}</h2>
+        {product.description && <p className="text-[15px] text-soft">{product.description}</p>}
+        <p className="text-lg tabular-nums">
+          <b className="font-semibold">{formatPrice(product.price)}</b>
+          {hasLover && <span className="text-caramel"> Lover {formatPrice(product.loverPrice)}</span>}
+        </p>
+      </div>
+    </div>
   )
 }

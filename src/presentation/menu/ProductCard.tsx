@@ -1,57 +1,54 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import type { Product } from '../../domain/menu/Product'
+import { useCart } from '../cart/useCart'
+import { ProductThumb } from '../shared/ProductThumb'
 import { formatPrice } from './formatPrice'
 import { ProductDetailModal } from './ProductDetailModal'
 
+// Altura FIXA da linha (cabe nome em 2 linhas + descrição + preço; 117px com a borda).
+// É o que deixa a lista virtualizada do MenuPage pousar exato ao tocar numa
+// categoria; o texto ao lado da miniatura corta com "..." em vez de esticar a linha.
+export const PRODUCT_ROW_HEIGHT_PX = 117
+
 export function ProductCard({ product }: { product: Product }) {
   const [detailOpen, setDetailOpen] = useState(false)
+  const quantityInCart = useCart((state) =>
+    state.items.filter((item) => item.product.id === product.id && !item.comboGroupId).reduce((sum, item) => sum + item.quantity, 0),
+  )
+  const hasLover = product.loverPrice < product.price
 
   return (
-    <article className="flex items-center gap-4 rounded-2xl bg-white p-3 shadow-sm">
-      <div className="h-[78px] w-[78px] shrink-0 overflow-hidden rounded-xl bg-secondary/10">
-        {product.imageUrl && (
-          <img
-            src={product.imageUrl ?? undefined}
-            alt=""
-            loading="lazy"
-            width={78}
-            height={78}
-            className="h-full w-full object-cover"
-          />
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col gap-1">
-        {/* Altura fixa reservada pra 2 linhas (line-height 28px × 2 = 56px do
-        min-h-14) — nunca varia, é o que faz o scroll suave até uma categoria
-        pousar exato (virtualização não precisa mais estimar/corrigir altura
-        de linha, o card é fixo). Nome de 1 linha só fica centralizado nesse
-        espaço (flex items-center no wrapper) em vez de colado no topo com
-        espaço em branco só embaixo — nome de 2 linhas ocupa tudo igual;
-        nome de 3+ linhas corta com "..." na 2ª (line-clamp-2 no <p>). */}
-        <div className="flex min-h-14 items-center">
-          <p className="font-body text-lg font-bold text-foreground line-clamp-2">{product.name}</p>
-        </div>
-        <span className="inline-flex w-fit items-center rounded-full border border-primary px-2 py-0.5 font-body text-[11px] font-medium text-secondary">
-          Cacau Lovers*
-        </span>
-        <div className="mt-0.5 flex items-baseline gap-2">
-          <span className="font-body text-[19px] font-bold text-primary">{formatPrice(product.loverPrice)}</span>
-          <span className="font-body text-sm text-foreground/50">{formatPrice(product.price)}</span>
-        </div>
-      </div>
-
+    <>
       <button
         type="button"
         onClick={() => setDetailOpen(true)}
         aria-label={`Ver detalhes de ${product.name}`}
-        className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center self-start rounded-full bg-primary text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="flex w-full items-center gap-3.5 border-b border-line py-3.5 text-left transition-colors active:bg-surface"
+        style={{ height: PRODUCT_ROW_HEIGHT_PX }}
       >
-        <Plus size={20} aria-hidden="true" />
+        <ProductThumb name={product.name} imageUrl={product.imageUrl} />
+
+        <span className="flex max-h-full min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
+          <span className="line-clamp-2 text-[17px] font-semibold leading-tight">{product.name}</span>
+          {product.description && <span className="line-clamp-1 text-[13px] text-muted">{product.description}</span>}
+          <span className="text-[15px] tabular-nums">
+            <b className="font-semibold">{formatPrice(product.price)}</b>
+            {hasLover && <span className="whitespace-nowrap text-caramel"> Lover {formatPrice(product.loverPrice)}</span>}
+          </span>
+        </span>
+
+        <span
+          aria-hidden="true"
+          className={`grid h-11 w-11 shrink-0 place-items-center rounded-[14px] border-[1.5px] text-[15px] font-semibold ${
+            quantityInCart > 0 ? 'border-caramel bg-chosen text-caramel' : 'border-line-strong text-ink'
+          }`}
+        >
+          {quantityInCart > 0 ? quantityInCart : <Plus size={20} />}
+        </span>
       </button>
 
       {detailOpen && <ProductDetailModal product={product} onClose={() => setDetailOpen(false)} />}
-    </article>
+    </>
   )
 }

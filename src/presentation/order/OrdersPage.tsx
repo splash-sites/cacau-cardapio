@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { isOrderFromToday } from '../../domain/order/isOrderFromToday'
 import { orderSummaryTotal } from '../../domain/order/orderSummaryTotal'
 import { recentOrders } from '../../domain/order/recentOrders'
@@ -11,6 +11,7 @@ import { useCurrentStore } from '../store/useCurrentStore'
 import { useCustomer } from '../customer/useCustomer'
 import { formatPrice } from '../menu/formatPrice'
 import { PageShell } from '../shared/PageShell'
+import { fieldClass, fieldLabelClass, iconButtonClass, primaryButtonClass, stepTitleClass } from '../shared/ui'
 import { useOrderHistory } from './useOrderHistory'
 import type { OrderSummary } from '../../domain/order/OrderSummary'
 import type { OrderStatus } from '../../domain/order/OrderStatus'
@@ -25,12 +26,12 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 }
 
 const STATUS_COLOR: Record<OrderStatus, string> = {
-  received: 'bg-amber-100 text-amber-800',
-  preparing: 'bg-amber-100 text-amber-800',
-  out_for_delivery: 'bg-blue-100 text-blue-800',
-  delivered: 'bg-blue-100 text-blue-800',
-  finalized: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+  received: 'bg-chosen text-caramel',
+  preparing: 'bg-chosen text-caramel',
+  out_for_delivery: 'bg-[#1f2a36] text-info',
+  delivered: 'bg-[#1f2a36] text-info',
+  finalized: 'bg-[#1d2e24] text-success',
+  cancelled: 'bg-[#3a1f1c] text-danger',
 }
 
 function statusLabel(order: OrderSummary): string {
@@ -46,24 +47,27 @@ function formatTime(iso: string): string {
 function OrderCard({ order }: { order: OrderSummary }) {
   const title = order.tableNumber ? `Mesa ${order.tableNumber}` : orderTypeLabel(order.orderType)
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg text-accent">{title}</h3>
-        <span className="font-body text-xs text-foreground/50">{formatTime(order.createdAt)}</span>
+    <div className="flex flex-col gap-3 rounded-[20px] bg-surface p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col">
+          <h3 className="font-display text-xl font-bold">{title}</h3>
+          <span className="text-[13px] text-muted">{formatTime(order.createdAt)}</span>
+        </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[order.status]}`}>
+          {statusLabel(order)}
+        </span>
       </div>
-      <ul className="mt-2 font-body text-sm text-foreground/80">
+      <ul className="flex flex-col gap-1 text-[15px]">
         {order.items.map((item, index) => (
           <li key={index}>
             {item.quantity}× {item.productName}
-            {item.note && <span className="text-foreground/50"> — {item.note}</span>}
+            {item.note && <span className="text-muted"> ({item.note})</span>}
           </li>
         ))}
       </ul>
-      <div className="mt-3 flex items-center justify-between border-t border-secondary/15 pt-3">
-        <span className={`rounded-full px-3 py-1 font-body text-xs font-medium ${STATUS_COLOR[order.status]}`}>
-          {statusLabel(order)}
-        </span>
-        <span className="font-body font-medium text-secondary">{formatPrice(orderSummaryTotal(order))}</span>
+      <div className="flex items-baseline justify-between border-t border-line pt-3 tabular-nums">
+        <span className="text-sm text-muted">Total</span>
+        <span className="font-semibold">{formatPrice(orderSummaryTotal(order))}</span>
       </div>
     </div>
   )
@@ -79,25 +83,22 @@ function CpfLookupForm({ onSubmit }: { onSubmit: (cpf: string) => void }) {
   return (
     <form
       onSubmit={handleSubmit((data) => onSubmit(data.cpf))}
-      className="flex flex-col gap-4 px-4 pt-8"
+      className="flex flex-col gap-4 px-5 pt-2"
       noValidate
     >
-      <p className="font-body text-sm text-foreground/70">Digite seu CPF pra ver seus pedidos.</p>
-      <label className="flex flex-col gap-1 font-body text-sm">
+      <p className="text-[15px] text-muted">Digite o CPF usado no pedido. A gente não pede senha.</p>
+      <label className={fieldLabelClass}>
         CPF
         <input
           type="text"
           inputMode="numeric"
           placeholder="000.000.000-00"
-          className="h-11 rounded-md border border-secondary/30 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className={fieldClass}
           {...register('cpf', { validate: (value) => isValidCpf(value) || 'CPF inválido' })}
         />
-        {errors.cpf && <span className="text-red-600">{errors.cpf.message}</span>}
+        {errors.cpf && <span className="text-[13px] text-danger">{errors.cpf.message}</span>}
       </label>
-      <button
-        type="submit"
-        className="h-11 min-h-11 rounded-md bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-      >
+      <button type="submit" className={primaryButtonClass}>
         Ver meus pedidos
       </button>
     </form>
@@ -127,24 +128,19 @@ export function OrdersPage() {
   const visibleOrders = tab === 'today' ? todayOrders : historyOrders
 
   return (
-    <PageShell className="text-foreground">
-      <div className="flex items-center gap-2 bg-accent px-4 py-4 text-accent-foreground">
-        <button
-          type="button"
-          onClick={() => navigate(`/${store.slug}/cardapio`)}
-          aria-label="Voltar pro cardápio"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <ArrowLeft size={20} aria-hidden="true" />
+    <PageShell className="pb-10">
+      <div className="px-5 py-4">
+        <button type="button" onClick={() => navigate(-1)} aria-label="Voltar" className={iconButtonClass}>
+          <ChevronLeft size={20} aria-hidden="true" />
         </button>
-        <h1 className="font-display text-xl">Meus pedidos</h1>
       </div>
+      <h1 className={`${stepTitleClass} px-5 pb-4`}>Meus pedidos</h1>
 
       {!cpf ? (
         <CpfLookupForm onSubmit={setManualCpf} />
       ) : (
-        <div className="flex flex-col gap-3 p-4">
-          <div className="flex gap-2 rounded-full bg-secondary/10 p-1" role="tablist">
+        <div className="flex flex-col gap-3 px-5">
+          <div className="flex gap-1 rounded-[16px] bg-surface-2 p-1" role="tablist">
             {(['today', 'history'] as const).map((option) => (
               <button
                 key={option}
@@ -152,8 +148,8 @@ export function OrdersPage() {
                 role="tab"
                 aria-selected={tab === option}
                 onClick={() => setTab(option)}
-                className={`h-11 min-h-11 flex-1 rounded-full font-body text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                  tab === option ? 'bg-primary text-primary-foreground' : 'text-secondary'
+                className={`h-11 flex-1 rounded-[12px] text-[15px] font-semibold transition-colors ${
+                  tab === option ? 'bg-caramel text-on-caramel' : 'text-muted'
                 }`}
               >
                 {TAB_LABEL[option]}
@@ -162,14 +158,14 @@ export function OrdersPage() {
           </div>
 
           {isPending && (
-            <p className={`font-body ${isError ? 'text-red-600' : 'text-foreground/60'}`}>
+            <p className={isError ? 'text-danger' : 'text-muted'}>
               {isError
                 ? 'Não foi possível carregar seus pedidos agora. Tentando de novo automaticamente…'
                 : 'Carregando pedidos…'}
             </p>
           )}
           {visibleOrders && visibleOrders.length === 0 && (
-            <p className="font-body text-foreground/60">
+            <p className="py-4 text-muted">
               {tab === 'today' ? 'Nenhum pedido feito hoje.' : 'Nenhum pedido encontrado com esse CPF.'}
             </p>
           )}

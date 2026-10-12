@@ -21,6 +21,8 @@ async function scrollUntilVisible(page: Page, locator: ReturnType<Page['getByRol
 
 test('mesa (QR) → cardápio → carrinho → identificação → confirmação → acompanhamento', async ({ page }) => {
   await page.goto(`/${STORE_SLUG}/mesa/${TABLE_NUMBER}`)
+  await expect(page.getByRole('heading', { name: `Você está na mesa ${TABLE_NUMBER}` })).toBeVisible()
+  await page.getByRole('button', { name: 'Ver o cardápio' }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/cardapio`)
 
   const addAguaButton = page.getByRole('button', { name: 'Ver detalhes de Água', exact: true })
@@ -34,7 +36,7 @@ test('mesa (QR) → cardápio → carrinho → identificação → confirmação
   await confirmAddButton.click()
   await expect(dialog).not.toBeVisible()
 
-  await page.getByRole('button', { name: /Ver carrinho/ }).click()
+  await page.getByRole('button', { name: /Ver sacola/ }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/carrinho`)
   await expect(page.getByText('Água')).toBeVisible()
 
@@ -46,17 +48,17 @@ test('mesa (QR) → cardápio → carrinho → identificação → confirmação
   await expect(page.getByLabel('Telefone')).not.toBeVisible()
   await expect(page.getByLabel('Número da mesa')).toHaveValue(TABLE_NUMBER)
 
-  await page.getByRole('button', { name: 'Confirmar' }).click()
+  await page.getByRole('button', { name: 'Continuar' }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/revisao`)
-  await expect(page.getByRole('heading', { name: 'Revisar pedido' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Tudo certo?' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Confirmar pedido' }).click()
 
   await expect(page.getByRole('heading', { name: 'Pedido enviado!' })).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByText(`Aguarde, sua mesa é a nº ${TABLE_NUMBER}.`)).toBeVisible()
+  await expect(page.getByText(`Mesa ${TABLE_NUMBER}. A gente leva até você.`)).toBeVisible()
 
   // Acompanhamento faz polling na RPC get_order_status a cada 5s — espera
   // sair do "carregando" e mostrar pelo menos o passo inicial (Recebido).
   await expect(page.getByText('Carregando status…')).not.toBeVisible({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'Fazer novo pedido' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Fazer outro pedido' })).toBeVisible()
 })

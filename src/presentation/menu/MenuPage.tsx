@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ShoppingBag } from 'lucide-react'
+import { ChevronLeft, ReceiptText } from 'lucide-react'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { cartItemCount, cartTotal } from '../../domain/cart/Cart'
 import { browsingOrderTypeLabel } from '../../domain/order/orderTypeLabel'
@@ -10,18 +10,22 @@ import { useCurrentStore } from '../store/useCurrentStore'
 import { FixedBottomBar } from '../shared/FixedBottomBar'
 import { PageShell } from '../shared/PageShell'
 import { prefersReducedMotion } from '../shared/prefersReducedMotion'
+import { iconButtonClass, primaryButtonClass } from '../shared/ui'
 import { CATEGORY_PILL_BAR_HEIGHT_PX, CategoryPillBar } from './CategoryPillBar'
-import { ProductCard } from './ProductCard'
+import { PRODUCT_ROW_HEIGHT_PX, ProductCard } from './ProductCard'
 import { PromotionCarousel } from './PromotionCarousel'
 import { formatPrice } from './formatPrice'
 import { buildRows, categoryRowIndex, nearestCategoryLabel } from './menuRows'
 import { useMenu } from './useMenu'
 import { usePromotions } from './usePromotions'
 
+const CATEGORY_ROW_HEIGHT_PX = 56
+
 export function MenuPage() {
   const store = useCurrentStore()
   const orderType = useOrderType((state) => state.orderType)
   const salesChannel = useOrderType((state) => state.salesChannel)
+  const tableNumber = useOrderType((state) => state.tableNumber)
   const items = useCart((state) => state.items)
   const navigate = useNavigate()
 
@@ -41,11 +45,11 @@ export function MenuPage() {
 
   const rowVirtualizer = useWindowVirtualizer({
     count: rows.length,
-    // Números exatos, não estimativa — ProductCard tem altura sempre igual
-    // (nome com line-clamp-2 + min-h-14, ver ProductCard.tsx), medido ao
-    // vivo: linha de produto 153px (card 141 + pb-3 12px), categoria 28px.
-    // É isso que permite scrollToIndex com behavior:'smooth' pousar exato.
-    estimateSize: (index) => (rows[index]?.type === 'category' ? 28 : 153),
+    // Números exatos, não estimativa: a linha de produto tem altura fixa
+    // (PRODUCT_ROW_HEIGHT_PX, ver ProductCard.tsx) e o cabeçalho de categoria
+    // também (CATEGORY_ROW_HEIGHT_PX). É isso que permite scrollToIndex com
+    // behavior:'smooth' pousar exato.
+    estimateSize: (index) => (rows[index]?.type === 'category' ? CATEGORY_ROW_HEIGHT_PX : PRODUCT_ROW_HEIGHT_PX),
     overscan: 8,
     scrollMargin: listOffsetRef.current,
   })
@@ -110,47 +114,57 @@ export function MenuPage() {
 
   const itemCount = cartItemCount(items)
 
+  const title = salesChannel === 'reseller' ? 'Revenda' : browsingOrderTypeLabel(orderType, store)
+  const subtitle = tableNumber ? `Mesa ${tableNumber}` : null
+
   return (
-    <PageShell className="text-foreground">
-      <div className="flex items-start justify-between gap-2 bg-accent px-4 py-5 text-background">
-        <div className="flex items-start gap-2">
-          <button
-            type="button"
-            onClick={() => navigate(`/${store.slug}`)}
-            aria-label="Voltar"
-            className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <ArrowLeft size={20} aria-hidden="true" />
-          </button>
-          <div>
-            <h1 className="font-display text-2xl">
-              {salesChannel === 'reseller' ? 'Atacado' : browsingOrderTypeLabel(orderType, store)}
-            </h1>
-            <p className="font-body text-sm text-background/70">Monte seu pedido com carinho, no seu ritmo.</p>
-          </div>
+    <PageShell>
+      <header className="flex items-center gap-3 px-5 pb-3 pt-4">
+        <button
+          type="button"
+          onClick={() => navigate(`/${store.slug}`)}
+          aria-label="Voltar para o início"
+          className={iconButtonClass}
+        >
+          <ChevronLeft size={20} aria-hidden="true" />
+        </button>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-[13px] text-muted">{store.name}</span>
+          <h1 className="truncate font-display text-2xl font-bold leading-tight">
+            {title}
+            {subtitle && <span className="text-caramel"> · {subtitle}</span>}
+          </h1>
         </div>
         <button
           type="button"
           onClick={() => navigate(`/${store.slug}/pedidos`)}
           aria-label="Meus pedidos"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center rounded-full bg-background/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className={iconButtonClass}
         >
-          <ShoppingBag size={20} aria-hidden="true" />
+          <ReceiptText size={20} aria-hidden="true" />
         </button>
-      </div>
+      </header>
+
+      {salesChannel === 'reseller' && (
+        <div className="px-5 pb-4">
+          <p className="font-display text-[28px] font-bold leading-[1.05] tracking-tight">
+            Preço de atacado, retirada no balcão
+          </p>
+        </div>
+      )}
+
+      {salesChannel === 'retail' && groups && promotions && promotions.length > 0 && (
+        <div className="px-5 pb-4">
+          <PromotionCarousel promotions={promotions} products={[...groups.values()].flat()} />
+        </div>
+      )}
 
       <CategoryPillBar categories={categories} active={activeCategory} onSelect={handleSelectCategory} />
 
-      <div className="px-4 py-6 pb-24">
-        {salesChannel === 'retail' && groups && promotions && promotions.length > 0 && (
-          <PromotionCarousel promotions={promotions} products={[...groups.values()].flat()} />
-        )}
-
-        {isLoading && <p className="font-body text-foreground/70">Carregando cardápio…</p>}
-        {isError && <p className="font-body text-red-600">Não foi possível carregar o cardápio agora.</p>}
-        {groups && groups.size === 0 && (
-          <p className="font-body text-foreground/70">Nenhum item disponível no momento.</p>
-        )}
+      <div className="px-5 pb-32">
+        {isLoading && <p className="py-6 text-muted">Carregando cardápio…</p>}
+        {isError && <p className="py-6 text-danger">Não foi possível carregar o cardápio agora.</p>}
+        {groups && groups.size === 0 && <p className="py-6 text-muted">Nenhum item disponível no momento.</p>}
 
         {groups && groups.size > 0 && (
           <div ref={listRef} style={{ position: 'relative', height: rowVirtualizer.getTotalSize() }}>
@@ -170,13 +184,14 @@ export function MenuPage() {
                   }}
                 >
                   {row.type === 'category' ? (
-                    <h2 className="mb-2 mt-6 font-body text-sm font-bold uppercase tracking-wide text-primary first:mt-0">
+                    <h2
+                      className="flex items-end pb-1 font-display text-[22px] font-bold"
+                      style={{ height: CATEGORY_ROW_HEIGHT_PX }}
+                    >
                       {row.category}
                     </h2>
                   ) : (
-                    <div className="pb-3">
-                      <ProductCard product={row.product} />
-                    </div>
+                    <ProductCard product={row.product} />
                   )}
                 </div>
               )
@@ -186,14 +201,18 @@ export function MenuPage() {
       </div>
 
       {itemCount > 0 && (
-        <FixedBottomBar className="px-4 pb-4">
+        <FixedBottomBar>
           <button
             type="button"
             onClick={() => navigate(`/${store.slug}/carrinho`)}
-            className="flex min-h-11 w-full items-center justify-between rounded-full bg-accent px-5 py-3 font-body text-accent-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className={`${primaryButtonClass} justify-between`}
           >
-            <span>{itemCount} {itemCount === 1 ? 'item' : 'itens'} · {formatPrice(cartTotal(items))}</span>
-            <span className="font-medium">Ver carrinho ›</span>
+            <span className="text-[15px] font-medium">
+              {itemCount} {itemCount === 1 ? 'item' : 'itens'}
+            </span>
+            <span>
+              Ver sacola <span className="tabular-nums">{formatPrice(cartTotal(items))}</span>
+            </span>
           </button>
         </FixedBottomBar>
       )}

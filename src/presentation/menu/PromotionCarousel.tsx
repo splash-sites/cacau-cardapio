@@ -63,7 +63,7 @@ export function PromotionCarousel({ promotions, products }: { promotions: Promot
   const previewPrice = comboPreviewPrice(promotion, products)
 
   return (
-    <div className="mb-6">
+    <div>
       <div
         role="button"
         tabIndex={0}
@@ -75,7 +75,7 @@ export function PromotionCarousel({ promotions, products }: { promotions: Promot
           else setOpenProduct(product)
         }}
         aria-label={`Ver detalhes de ${product.name}`}
-        className="relative block h-40 w-full cursor-pointer overflow-hidden rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="relative block h-44 w-full cursor-pointer overflow-hidden rounded-3xl bg-tile text-left"
       >
         <img
           src={promotion.imageUrl ?? undefined}
@@ -83,19 +83,21 @@ export function PromotionCarousel({ promotions, products }: { promotions: Promot
           loading="lazy"
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-accent/95 via-accent/70 to-transparent" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-r from-bg/95 via-bg/70 to-transparent" aria-hidden="true" />
 
-        <div className="relative flex h-full flex-col justify-center gap-1 px-4">
+        <div className="relative flex h-full flex-col justify-center gap-1 px-5">
           {promotion.badgeLabel && (
-            <span className="mb-1 inline-flex w-fit items-center rounded-full bg-primary px-2 py-0.5 font-body text-[11px] font-medium text-primary-foreground">
+            <span className="mb-1 inline-flex w-fit items-center rounded-full bg-caramel px-2.5 py-0.5 text-xs font-semibold text-on-caramel">
               {promotion.badgeLabel}
             </span>
           )}
-          <p className="font-display text-xl text-background">{promotion.title}</p>
-          {promotion.subtitle && <p className="font-body text-sm text-background/70">{promotion.subtitle}</p>}
+          <p className="font-display text-[22px] font-bold leading-tight">{promotion.title}</p>
+          {promotion.subtitle && <p className="text-sm text-soft">{promotion.subtitle}</p>}
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="font-body text-lg font-bold text-primary">{formatPrice(previewPrice?.lover ?? product.loverPrice)}</span>
-            <span className="font-body text-sm text-background/50 line-through">{formatPrice(previewPrice?.regular ?? product.price)}</span>
+            <span className="text-lg font-semibold tabular-nums">{formatPrice(previewPrice?.regular ?? product.price)}</span>
+            {(previewPrice?.lover ?? product.loverPrice) < (previewPrice?.regular ?? product.price) && (
+              <span className="text-sm text-caramel tabular-nums">Lover {formatPrice(previewPrice?.lover ?? product.loverPrice)}</span>
+            )}
           </div>
 
           {slides.length > 1 && (
@@ -111,11 +113,11 @@ export function PromotionCarousel({ promotions, products }: { promotions: Promot
                     event.stopPropagation()
                     setIndex(slideIndex)
                   }}
-                  className="flex h-6 w-4 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="flex h-6 w-5 items-center justify-center"
                 >
                   <span
                     className={`h-1.5 rounded-full transition-all ${
-                      slideIndex === index ? 'w-4 bg-primary' : 'w-1.5 bg-background/40'
+                      slideIndex === index ? 'w-4 bg-caramel' : 'w-1.5 bg-ink/40'
                     }`}
                     aria-hidden="true"
                   />

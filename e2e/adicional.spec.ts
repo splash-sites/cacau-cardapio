@@ -22,6 +22,8 @@ async function scrollUntilVisible(page: Page, locator: ReturnType<Page['getByRol
 
 test('adicional múltiplo (Bytes + Granulado) em produto com variação obrigatória', async ({ page }) => {
   await page.goto(`/${STORE_SLUG}/mesa/${TABLE_NUMBER}`)
+  await expect(page.getByRole('heading', { name: `Você está na mesa ${TABLE_NUMBER}` })).toBeVisible()
+  await page.getByRole('button', { name: 'Ver o cardápio' }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/cardapio`)
 
   // Botão real do ProductCard (não o slide do carrossel, que também usa
@@ -33,11 +35,19 @@ test('adicional múltiplo (Bytes + Granulado) em produto com variação obrigat�
 
   const dialog = page.getByRole('dialog', { name: 'Fondue' })
   await expect(dialog).toBeVisible()
+  // Produto em etapas: cada grupo de variação é um passo, com "Continuar" travado
+  // até escolher. Os adicionais vêm depois, no último passo com "Adicionar ao pedido".
+  const nextButton = dialog.getByRole('button', { name: 'Continuar' })
+  await expect(nextButton).toBeDisabled()
+  for (let step = 0; step < 2; step++) {
+    for (const option of ['Banana', 'Chocolate preto']) {
+      const radio = dialog.getByRole('radio', { name: option })
+      if (await radio.isVisible()) await radio.click()
+    }
+    await expect(nextButton).toBeEnabled()
+    await nextButton.click()
+  }
   const addButton = dialog.getByRole('button', { name: 'Adicionar ao pedido' })
-  await expect(addButton).toBeDisabled()
-
-  await dialog.getByRole('radio', { name: 'Banana' }).click()
-  await dialog.getByRole('radio', { name: 'Chocolate preto' }).click()
   await expect(addButton).toBeEnabled()
 
   const bytesCheckbox = dialog.getByRole('checkbox', { name: 'Bytes' })
@@ -51,7 +61,7 @@ test('adicional múltiplo (Bytes + Granulado) em produto com variação obrigat�
   await addButton.click()
   await expect(dialog).not.toBeVisible()
 
-  await page.getByRole('button', { name: /Ver carrinho/ }).click()
+  await page.getByRole('button', { name: /Ver sacola/ }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/carrinho`)
   await expect(page.getByText(/Bytes/)).toBeVisible()
   await expect(page.getByText(/Granulado/)).toBeVisible()
@@ -60,7 +70,7 @@ test('adicional múltiplo (Bytes + Granulado) em produto com variação obrigat�
   await page.getByLabel('Nome completo').fill('Teste Playwright Adicional')
   await page.getByLabel('CPF').fill(VALID_TEST_CPF)
   await expect(page.getByLabel('Telefone')).not.toBeVisible()
-  await page.getByRole('button', { name: 'Confirmar' }).click()
+  await page.getByRole('button', { name: 'Continuar' }).click()
 
   await expect(page).toHaveURL(`/${STORE_SLUG}/revisao`)
   await expect(page.getByText(/Bytes/)).toBeVisible()

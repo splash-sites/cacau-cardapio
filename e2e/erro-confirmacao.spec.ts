@@ -35,6 +35,7 @@ test('confirm_order recusa o pedido → cliente vê mensagem de erro clara, sem 
   )
 
   await page.goto(`/${STORE_SLUG}/mesa/${TABLE_NUMBER}`)
+  await page.getByRole('button', { name: 'Ver o cardápio' }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/cardapio`)
 
   const addAguaButton = page.getByRole('button', { name: 'Ver detalhes de Água', exact: true })
@@ -43,12 +44,12 @@ test('confirm_order recusa o pedido → cliente vê mensagem de erro clara, sem 
   const dialog = page.getByRole('dialog', { name: 'Água' })
   await dialog.getByRole('button', { name: 'Adicionar ao pedido' }).click()
 
-  await page.getByRole('button', { name: /Ver carrinho/ }).click()
+  await page.getByRole('button', { name: /Ver sacola/ }).click()
   await page.getByRole('button', { name: 'Continuar' }).click()
   await page.getByLabel('Nome completo').fill('Teste Playwright Erro')
   await page.getByLabel('CPF').fill(VALID_TEST_CPF)
   await expect(page.getByLabel('Telefone')).not.toBeVisible()
-  await page.getByRole('button', { name: 'Confirmar' }).click()
+  await page.getByRole('button', { name: 'Continuar' }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/revisao`)
 
   const confirmButton = page.getByRole('button', { name: 'Confirmar pedido' })
@@ -64,5 +65,5 @@ test('confirm_order recusa o pedido → cliente vê mensagem de erro clara, sem 
 
   // Carrinho não pode ter sido limpo numa confirmação que falhou — cliente
   // tenta de novo sem montar o pedido do zero.
-  await expect(page.getByRole('heading', { name: 'Revisar pedido' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Tudo certo?' })).toBeVisible()
 })

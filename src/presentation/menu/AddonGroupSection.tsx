@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react'
 import type { AddonGroup } from '../../domain/addon/AddonGroup'
 import { type AddonSelections, groupSelectedQuantity, toggleAddonOption } from '../../domain/addon/addonSelection'
+import { optionCardClass } from '../shared/ui'
 import { formatPrice } from './formatPrice'
 
 export function AddonGroupSection({
@@ -13,55 +14,43 @@ export function AddonGroupSection({
   onChange: (selections: AddonSelections) => void
 }) {
   const isFull = group.maxQuantity !== null && groupSelectedQuantity(selections, group) >= group.maxQuantity
+  const single = group.selectionType === 'single'
 
   return (
-    <div>
-      <p className="font-body text-xs font-bold uppercase tracking-wide text-secondary">{group.name}</p>
-      <div className="mt-1 flex flex-col gap-1">
-        {group.options.map((option) => {
-          const selected = (selections[option.id] ?? 0) > 0
-          const blocked = !selected && group.selectionType === 'multiple' && isFull
+    <div role={single ? 'radiogroup' : 'group'} aria-label={group.name} className="flex flex-col gap-3">
+      {group.options.map((option) => {
+        const selected = (selections[option.id] ?? 0) > 0
+        const blocked = !selected && !single && isFull
+        const hasLover = option.loverPrice < option.price
 
-          return (
-            <button
-              key={option.id}
-              type="button"
-              role={group.selectionType === 'single' ? 'radio' : 'checkbox'}
-              aria-checked={selected}
-              disabled={blocked}
-              onClick={() => onChange(toggleAddonOption(selections, group, option.id))}
-              className="flex min-h-11 w-full items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
-            >
-              {group.selectionType === 'single' ? (
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-                    selected ? 'border-primary' : 'border-secondary/30'
-                  }`}
-                >
-                  {selected && <span className="h-3 w-3 rounded-full bg-primary" aria-hidden="true" />}
-                </span>
-              ) : (
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
-                    selected ? 'border-primary bg-primary text-primary-foreground' : 'border-secondary/30 bg-white'
-                  }`}
-                >
-                  {selected && <Check size={14} aria-hidden="true" />}
-                </span>
-              )}
-              <span className="flex-1 font-body text-sm text-foreground">{option.name}</span>
-              <span className="flex flex-col items-end font-body text-xs leading-tight">
-                <span className="font-medium text-primary">
-                  {option.loverPrice !== option.price && 'Lover* '}+{formatPrice(option.loverPrice)}
-                </span>
-                {option.loverPrice !== option.price && (
-                  <span className="text-foreground/50">+{formatPrice(option.price)}</span>
-                )}
+        return (
+          <button
+            key={option.id}
+            type="button"
+            role={single ? 'radio' : 'checkbox'}
+            aria-checked={selected}
+            disabled={blocked}
+            onClick={() => onChange(toggleAddonOption(selections, group, option.id))}
+            className={`${optionCardClass(selected)} disabled:opacity-40`}
+          >
+            <span className="flex flex-1 flex-col gap-0.5">
+              <span className="text-[17px] font-semibold">{option.name}</span>
+              <span className="text-sm tabular-nums">
+                + {formatPrice(option.price)}
+                {hasLover && <span className="text-caramel"> Lover {formatPrice(option.loverPrice)}</span>}
               </span>
-            </button>
-          )
-        })}
-      </div>
+            </span>
+            <span
+              aria-hidden="true"
+              className={`grid h-[22px] w-[22px] shrink-0 place-items-center border-2 ${single ? 'rounded-full' : 'rounded-md'} ${
+                selected ? 'border-caramel bg-caramel text-on-caramel' : 'border-line-strong'
+              }`}
+            >
+              {selected && (single ? <span className="h-2.5 w-2.5 rounded-full bg-on-caramel" /> : <Check size={14} strokeWidth={3} />)}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }

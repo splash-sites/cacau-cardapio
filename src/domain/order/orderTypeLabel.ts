@@ -4,7 +4,7 @@ import type { OrderType } from './OrderType'
 const LABELS: Record<OrderType, string> = {
   dine_in: 'Cafeteria',
   delivery: 'Entrega',
-  pickup: 'Para Levar',
+  pickup: 'Para levar',
 }
 
 export function orderTypeLabel(orderType: OrderType): string {
@@ -18,5 +18,5 @@ export function orderTypeLabel(orderType: OrderType): string {
 // não sugerir uma decisão que o cliente ainda não tomou.
 export function browsingOrderTypeLabel(orderType: OrderType, store: Store): string {
   const undecided = (orderType === 'pickup' || orderType === 'delivery') && store.supportsPickup && store.supportsDelivery
-  return undecided ? 'Para Levar/Entrega' : orderTypeLabel(orderType)
+  return undecided ? 'Para levar ou entregar' : orderTypeLabel(orderType)
 }

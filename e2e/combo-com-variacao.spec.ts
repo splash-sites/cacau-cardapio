@@ -15,6 +15,8 @@ test('promoção de combo → variação obrigatória em 2 grupos → carrinho a
   // corrida entre o teste e a rotação automática de slide a cada 3.5s.
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(`/${STORE_SLUG}/mesa/${TABLE_NUMBER}`)
+  await expect(page.getByRole('heading', { name: `Você está na mesa ${TABLE_NUMBER}` })).toBeVisible()
+  await page.getByRole('button', { name: 'Ver o cardápio' }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/cardapio`)
 
   // Loja pode ter mais de 1 promoção de Fondue (o carrossel roda
@@ -45,7 +47,7 @@ test('promoção de combo → variação obrigatória em 2 grupos → carrinho a
   await addButton.click()
   await expect(dialog).not.toBeVisible()
 
-  await page.getByRole('button', { name: /Ver carrinho/ }).click()
+  await page.getByRole('button', { name: /Ver sacola/ }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/carrinho`)
   // Troca de tela tem fade: o carrossel do cardápio (título "TESTE - Fondue…")
   // ainda está no DOM por um instante — espera sair antes de procurar "Fondue".
@@ -61,7 +63,7 @@ test('promoção de combo → variação obrigatória em 2 grupos → carrinho a
   await page.getByLabel('CPF').fill(VALID_TEST_CPF)
   await expect(page.getByLabel('Telefone')).not.toBeVisible()
   await expect(page.getByLabel('Número da mesa')).toHaveValue(TABLE_NUMBER)
-  await page.getByRole('button', { name: 'Confirmar' }).click()
+  await page.getByRole('button', { name: 'Continuar' }).click()
 
   await expect(page).toHaveURL(`/${STORE_SLUG}/revisao`)
   await expect(page.getByText('Combo', { exact: true })).toBeVisible()

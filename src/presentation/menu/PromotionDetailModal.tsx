@@ -21,6 +21,8 @@ import {
 } from '../../domain/variation/variationSelection'
 import type { VariationOption } from '../../domain/variation/VariationOption'
 import { useCart } from '../cart/useCart'
+import { ProductThumb } from '../shared/ProductThumb'
+import { primaryButtonClass } from '../shared/ui'
 import { AddonGroupSection } from './AddonGroupSection'
 import { formatPrice } from './formatPrice'
 import { useProductAddons } from './useProductAddons'
@@ -169,7 +171,7 @@ export function PromotionDetailModal({
       <div
         onClick={handleClose}
         style={{ transitionDuration: `${TRANSITION_MS}ms` }}
-        className={`absolute inset-0 bg-black/50 transition-opacity ease-out motion-reduce:transition-none ${visible ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-[rgba(10,6,5,0.6)] transition-opacity ease-out motion-reduce:transition-none ${visible ? 'opacity-100' : 'opacity-0'}`}
       />
 
       <div
@@ -180,24 +182,25 @@ export function PromotionDetailModal({
           transitionDuration: `${TRANSITION_MS}ms`,
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
         }}
-        className="relative z-10 flex max-h-[88vh] w-full sm:max-w-sm flex-col overflow-hidden rounded-t-[20px] bg-background shadow-xl transition-transform ease-out motion-reduce:transition-none"
+        className="relative z-10 flex max-h-[90dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-bg text-ink transition-transform ease-out motion-reduce:transition-none"
       >
-        <div className="flex shrink-0 items-start justify-between gap-2 px-4 pt-4">
+        <div className="flex shrink-0 items-start justify-between gap-3 px-5 pt-5">
           <div>
-            <h2 className="font-display text-2xl font-bold text-accent">{promotion.title}</h2>
-            {promotion.subtitle && <p className="mt-1 font-body text-sm text-foreground/70">{promotion.subtitle}</p>}
+            {promotion.badgeLabel && <span className="mb-2 inline-block rounded-full bg-caramel px-2.5 py-0.5 text-xs font-semibold text-on-caramel">{promotion.badgeLabel}</span>}
+            <h2 className="font-display text-[28px] font-bold leading-tight">{promotion.title}</h2>
+            {promotion.subtitle && <p className="mt-1 text-sm text-muted">{promotion.subtitle}</p>}
           </div>
           <button
             type="button"
             onClick={handleClose}
             aria-label="Fechar"
-            className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-surface-2 text-ink"
           >
             <X size={18} aria-hidden="true" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5">
           <div className="flex flex-col gap-4">
             {slots.map((slot) => (
               <ComboSlotSection
@@ -209,22 +212,22 @@ export function PromotionDetailModal({
             ))}
 
             <div className="flex items-center justify-between">
-              <span className="font-body text-xs font-bold uppercase tracking-wide text-secondary">Quantidade</span>
-              <div className="flex h-11 items-center gap-3 rounded-full bg-primary/10">
+              <span className="text-[15px] font-semibold">Quantidade</span>
+              <div className="flex h-12 items-center rounded-[14px] border-[1.5px] border-line-strong">
                 <button
                   type="button"
                   onClick={() => setComboQuantity((q) => Math.max(1, q - 1))}
                   aria-label="Diminuir quantidade"
-                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="grid h-12 w-12 place-items-center text-lg font-medium disabled:opacity-40"
                 >
                   −
                 </button>
-                <span className="min-w-4 text-center font-body font-medium text-foreground">{comboQuantity}</span>
+                <span className="w-6 text-center font-semibold tabular-nums">{comboQuantity}</span>
                 <button
                   type="button"
                   onClick={() => setComboQuantity((q) => q + 1)}
                   aria-label="Aumentar quantidade"
-                  className="flex h-11 w-11 items-center justify-center text-lg font-body font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="grid h-12 w-12 place-items-center text-lg font-medium disabled:opacity-40"
                 >
                   +
                 </button>
@@ -233,25 +236,28 @@ export function PromotionDetailModal({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-secondary/15 bg-background px-4 py-3">
-          <div className="mb-2 flex items-center justify-between font-body text-sm">
-            <span className="font-medium text-primary">Cacau Lovers* {formatPrice(loverTotal)}</span>
-            <span className="text-foreground/50">{formatPrice(regularTotal)}</span>
+        <div className="shrink-0 border-t border-line bg-bg px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
+          <div className="mb-2.5 flex items-baseline justify-between text-[15px] tabular-nums">
+            <span className="text-muted">Total do combo</span>
+            <span className="text-right">
+              {formatPrice(regularTotal)}
+              {loverTotal < regularTotal && <span className="block text-[13px] text-caramel">Lover {formatPrice(loverTotal)}</span>}
+            </span>
           </div>
           {anyError ? (
-            <p className="mb-2 text-center font-body text-xs text-red-600">
+            <p className="mb-2 text-center text-[13px] text-danger">
               Não foi possível carregar as opções desse combo. Tente fechar e abrir de novo.
             </p>
           ) : (
             !allReady && (
-              <p className="mb-2 text-center font-body text-xs text-secondary">Escolha as opções acima pra continuar</p>
+              <p className="mb-2 text-center text-[13px] text-muted">Escolha as opções acima para continuar</p>
             )
           )}
           <button
             type="button"
             onClick={handleAdd}
             disabled={!allReady}
-            className="h-11 min-h-11 w-full rounded-2xl bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
+            className={primaryButtonClass}
           >
             Adicionar combo
           </button>
@@ -310,36 +316,34 @@ function ComboSlotSection({
   }, [baseRegular, addonsRegular, baseLover, addonsLover, addonIdsKey, variationIdsKey, ready, error])
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-secondary/15 bg-white/40 p-3">
+    <div className="flex flex-col gap-3 rounded-[20px] bg-surface p-4">
       <div className="flex items-center gap-3">
-        {product.imageUrl && (
-          <img
-            src={product.imageUrl ?? undefined}
-            alt=""
-            loading="lazy"
-            className="h-14 w-14 shrink-0 rounded-lg object-cover"
-          />
-        )}
-        <p className="font-body text-sm font-bold text-foreground">
+        <ProductThumb name={product.name} imageUrl={product.imageUrl} size={56} />
+        <p className="text-[17px] font-semibold">
           {quantity > 1 && `${quantity}× `}
           {product.name}
         </p>
       </div>
 
-      {loading && <p className="font-body text-xs text-foreground/50">Carregando opções…</p>}
-      {error && <p className="font-body text-xs text-red-600">Não foi possível carregar as opções desse item.</p>}
+      {loading && <p className="text-[13px] text-muted">Carregando opções…</p>}
+      {error && <p className="text-[13px] text-danger">Não foi possível carregar as opções deste item.</p>}
 
       {varGroups.map((group) => (
+        <div key={group.id} className="flex flex-col gap-2">
+          <p className="text-sm font-semibold text-muted">{group.name}</p>
         <VariationGroupSection
-          key={group.id}
           group={group}
           selectedOptionId={variationSelections[group.id]}
           onSelect={(optionId) => setVariationSelections((current) => selectVariationOption(current, group.id, optionId))}
         />
+        </div>
       ))}
 
       {groups.map((group) => (
-        <AddonGroupSection key={group.id} group={group} selections={selections} onChange={setSelections} />
+        <div key={group.id} className="flex flex-col gap-2">
+          <p className="text-sm font-semibold text-muted">{group.name}</p>
+          <AddonGroupSection group={group} selections={selections} onChange={setSelections} />
+        </div>
       ))}
     </div>
   )

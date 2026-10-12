@@ -47,7 +47,7 @@ export function ImageLightbox({ imageUrl, name, price, onClose }: ImageLightboxP
         type="button"
         onClick={handleClose}
         aria-label="Fechar"
-        className="absolute right-4 top-4 flex h-11 w-11 min-h-11 items-center justify-center rounded-full bg-black/50 text-2xl leading-none text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="absolute right-4 top-4 flex h-11 w-11 min-h-11 items-center justify-center rounded-full bg-black/50 text-2xl leading-none text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         ×
       </button>
@@ -64,10 +64,10 @@ export function ImageLightbox({ imageUrl, name, price, onClose }: ImageLightboxP
         <img
           src={imageUrl ?? undefined}
           alt={name}
-          className="w-full rounded-xl object-cover"
+          className="w-full rounded-3xl object-cover"
         />
-        <p className="font-display text-xl text-background">{name}</p>
-        <p className="font-body font-medium text-primary">{price}</p>
+        <p className="font-display text-2xl font-bold text-ink">{name}</p>
+        <p className="font-semibold text-caramel">{price}</p>
       </div>
     </div>
   )

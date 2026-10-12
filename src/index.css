@@ -1,20 +1,77 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #F0ECD2;
-  --color-foreground: #030404;
+  /* Identidade Ganache, tema escuro do cardápio (design system "Splash Pedidos"). */
+  --color-bg: #1b110e;
+  --color-surface: #241713;
+  --color-surface-2: #2a1b16;
+  --color-tile: #3b2620;
+  --color-line: #2e1f1a;
+  --color-line-strong: #4a342c;
+  --color-ink: #f6ede6;
+  --color-soft: #d8c8bd;
+  --color-muted: #b9a69a;
+  --color-faint: #8f7b70;
+  --color-caramel: #e8a75c;
+  --color-on-caramel: #1b110e;
+  --color-chosen: #3a2520;
+  --color-success: #7fc79a;
+  --color-info: #8bb8e8;
+  --color-danger: #f08a80;
 
-  --color-primary: #CF9047;
-  --color-primary-foreground: #030404;
+  /* Nomes antigos, apontando pra paleta nova. */
+  --color-background: #1b110e;
+  --color-foreground: #f6ede6;
+  --color-primary: #e8a75c;
+  --color-primary-foreground: #1b110e;
+  --color-secondary: #d9c2b2;
+  --color-secondary-foreground: #1b110e;
+  --color-accent: #f6ede6;
+  --color-accent-foreground: #1b110e;
 
-  --color-secondary: #7B431B;
-  --color-secondary-foreground: #F0ECD2;
+  --radius-lg: 0.75rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
 
-  --color-accent: #2C120B;
-  --color-accent-foreground: #F0ECD2;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+}
 
-  --font-display: "Orelega One", serif;
-  --font-body: "Inter", sans-serif;
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-caramel);
+  outline-offset: 2px;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* iOS/WebKit dá zoom automático em input com font-size < 16px */

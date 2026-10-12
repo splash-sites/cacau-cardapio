@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft } from 'lucide-react'
 import { confirmOrder } from '../../application/order/confirmOrder'
-import { cartLoverTotal, cartTotal, itemUnitLoverPrice, itemUnitPrice } from '../../domain/cart/Cart'
+import { cartLoverTotal, cartTotal, itemUnitPrice } from '../../domain/cart/Cart'
+import { formatCpf } from '../../domain/customer/cpf'
+import { maskPhone } from '../../domain/customer/phone'
 import { groupCartItems } from '../../domain/cart/groupCartItems'
-import { orderTypeLabel } from '../../domain/order/orderTypeLabel'
 import { isStockError, stockErrorMessage } from '../../domain/order/stockError'
 import { useCart } from '../cart/useCart'
 import { useCustomer } from '../customer/useCustomer'
@@ -13,8 +13,10 @@ import { formatPrice } from '../menu/formatPrice'
 import { supabaseProductRepository } from '../../infrastructure/menu/SupabaseProductRepository'
 import { supabaseOrderRepository } from '../../infrastructure/order/SupabaseOrderRepository'
 import { useCurrentStore } from '../store/useCurrentStore'
+import { CheckoutHeader } from '../shared/CheckoutHeader'
 import { PageShell } from '../shared/PageShell'
-import { OrderTrackingView } from './OrderTrackingView'
+import { primaryButtonClass, stepTitleClass } from '../shared/ui'
+import { OrderTrackingView, type OrderSummaryLines } from './OrderTrackingView'
 import { useOrderType } from './useOrderType'
 import { buildWhatsappOrderMessage, buildWhatsappUrl } from './whatsappOrderMessage'
 
@@ -45,6 +47,7 @@ export function ReviewPage() {
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [stockRefreshed, setStockRefreshed] = useState(false)
+  const [summary, setSummary] = useState<OrderSummaryLines | null>(null)
 
   if (!orderType) return <Navigate to={`/${store.slug}`} replace />
   if (!customer) return <Navigate to={`/${store.slug}/identificacao`} replace />
@@ -57,6 +60,7 @@ export function ReviewPage() {
         tableNumber={tableNumber}
         customerCpf={customer.cpf}
         whatsappUrl={whatsappUrl}
+        summary={summary}
       />
     )
   }
@@ -80,6 +84,14 @@ export function ReviewPage() {
         const message = buildWhatsappOrderMessage(store.name, customer, items)
         setWhatsappUrl(buildWhatsappUrl(store.whatsappNumber, message))
       }
+      // Resumo guardado antes de limpar a sacola: o acompanhamento mostra o que foi pedido.
+      setSummary({
+        lines: items.map((item) => ({
+          label: `${item.quantity}× ${item.product.name}`,
+          total: itemUnitPrice(item) * item.quantity,
+        })),
+        total: cartTotal(items),
+      })
       clearCart()
       setOrderId(result.id)
     } catch (err) {
@@ -105,117 +117,158 @@ export function ReviewPage() {
     }
   }
 
+  const regular = cartTotal(items)
+  const lover = cartLoverTotal(items)
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const fulfillment =
+    orderType === 'dine_in'
+      ? `Na cafeteria${tableNumber ? `, mesa ${tableNumber}` : ''}`
+      : orderType === 'delivery'
+        ? 'Entrega no seu endereço'
+        : 'Retirada no balcão'
+  const paymentNote =
+    orderType === 'dine_in'
+      ? 'Pagamento na mesa, com a atendente.'
+      : orderType === 'delivery'
+        ? 'Pagamento na entrega.'
+        : 'Pagamento na retirada, direto no balcão.'
+  const canSwitchFulfillment =
+    orderType !== 'dine_in' && salesChannel === 'retail' && store.supportsPickup && store.supportsDelivery
+
   return (
-    <PageShell className="flex flex-col gap-6 px-4 py-8 text-foreground">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => navigate(`/${store.slug}/identificacao`)}
-          aria-label="Voltar"
-          className="flex h-11 w-11 min-h-11 shrink-0 items-center justify-center text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <ArrowLeft size={24} aria-hidden="true" />
-        </button>
-        <h1 className="font-display text-2xl text-accent">Revisar pedido</h1>
-      </div>
+    <PageShell>
+      <CheckoutHeader
+        current="Confirmar"
+        onBack={() => navigate(`/${store.slug}/identificacao`)}
+        backLabel="Voltar para seus dados"
+      />
 
-      <section>
-        <h2 className="mb-2 font-display text-lg text-accent">
-          {orderTypeLabel(orderType)}
-          {orderType === 'dine_in' && tableNumber ? ` · Mesa ${tableNumber}` : ''}
-        </h2>
-        <ul>
-          {groupCartItems(items).map((group) => {
-            if (group.type === 'combo') {
-              const loverTotal = group.items.reduce((sum, item) => sum + itemUnitLoverPrice(item) * item.quantity, 0)
-              const regularTotal = group.items.reduce((sum, item) => sum + itemUnitPrice(item) * item.quantity, 0)
-              return (
-                <li key={group.comboGroupId} className="border-b border-secondary/15 py-2 font-body">
-                  <p className="mb-1 font-body text-xs font-bold uppercase tracking-wide text-secondary">Combo</p>
-                  {group.items.map((item) => {
-                    const detailLine = [...item.variations.map((v) => v.name), ...item.addons.map((a) => a.name)].join(', ')
-                    return (
-                      <div key={item.id} className="flex justify-between">
-                        <span>{item.quantity}× {item.product.name}</span>
-                        {detailLine && <span className="text-xs text-foreground/60">{detailLine}</span>}
-                      </div>
-                    )
-                  })}
-                  <div className="mt-1 flex justify-end gap-2 text-right">
-                    <p className="font-medium text-primary">{formatPrice(loverTotal)}</p>
-                    <p className="text-xs text-foreground/50">{formatPrice(regularTotal)}</p>
-                  </div>
-                </li>
-              )
-            }
+      <div className="flex flex-col gap-4 px-5 pb-48">
+        <h1 className={stepTitleClass}>Tudo certo?</h1>
 
-            const { id, product, quantity, addons, variations } = group.item
-            const unitLover = itemUnitLoverPrice(group.item)
-            const unitRegular = itemUnitPrice(group.item)
-            const detailLine = [...variations.map((v) => v.name), ...addons.map((a) => a.name)].join(', ')
-
-            return (
-              <li key={id} className="flex justify-between border-b border-secondary/15 py-2 font-body">
-                <div>
-                  <span>{quantity}× {product.name}</span>
-                  {detailLine && <p className="font-body text-xs text-foreground/60">{detailLine}</p>}
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-primary">{formatPrice(unitLover * quantity)}</p>
-                  <p className="text-xs text-foreground/50">{formatPrice(unitRegular * quantity)}</p>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-        <div className="flex justify-between pt-2 font-body">
-          <span className="font-medium text-secondary">Total</span>
-          <div className="text-right">
-            <p className="font-medium text-primary">Cacau Lovers* {formatPrice(cartLoverTotal(items))}</p>
-            <p className="text-sm text-foreground/50">{formatPrice(cartTotal(items))}</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="font-body">
-        <h2 className="mb-2 font-display text-lg text-accent">Seus dados</h2>
-        <p>{customer.fullName}</p>
-        <p>{customer.phone}</p>
-        {customer.address && (
-          <p>
-            {customer.address.street}, {customer.address.number}
-            {customer.address.complement ? ` - ${customer.address.complement}` : ''} — {customer.address.neighborhood},{' '}
-            {customer.address.city}/{customer.address.state}
-          </p>
-        )}
-      </section>
-
-      {status === 'error' && (
-        <div className="flex flex-col gap-2 font-body text-red-600">
-          <p>Não foi possível confirmar seu pedido. {errorMessage}</p>
-          {stockRefreshed && (
-            <>
-              <p>Atualizamos seu carrinho com o estoque disponível agora. Confira as quantidades.</p>
+        <section className="flex flex-col gap-1 rounded-[20px] bg-surface p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-[17px] font-semibold">{fulfillment}</h2>
+            {canSwitchFulfillment && (
               <button
                 type="button"
-                onClick={() => navigate(`/${store.slug}/carrinho`)}
-                className="h-11 min-h-11 rounded-md border border-secondary/30 bg-white font-medium text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                onClick={() => navigate(`/${store.slug}/identificacao`)}
+                className="text-sm font-semibold text-caramel"
               >
-                Revisar carrinho
+                Alterar
               </button>
-            </>
+            )}
+          </div>
+          {customer.address && orderType === 'delivery' && (
+            <span className="text-sm text-muted">
+              {customer.address.street}, {customer.address.number}
+              {customer.address.complement ? ` - ${customer.address.complement}` : ''}, {customer.address.neighborhood},{' '}
+              {customer.address.city}/{customer.address.state}
+            </span>
           )}
-        </div>
-      )}
+        </section>
 
-      <button
-        type="button"
-        onClick={handleConfirm}
-        disabled={status === 'submitting' || items.length === 0}
-        className="h-11 min-h-11 rounded-md bg-primary font-body font-medium text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
-      >
-        {status === 'submitting' ? 'Confirmando…' : 'Confirmar pedido'}
-      </button>
+        <section className="flex flex-col gap-1 rounded-[20px] bg-surface p-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[17px] font-semibold">{customer.fullName}</span>
+            <button
+              type="button"
+              onClick={() => navigate(`/${store.slug}/identificacao`)}
+              className="text-sm font-semibold text-caramel"
+            >
+              Alterar
+            </button>
+          </div>
+          <span className="text-sm text-muted">
+            CPF {formatCpf(customer.cpf)}
+            {customer.phone && `, ${maskPhone(customer.phone)}`}
+          </span>
+        </section>
+
+        <section className="flex flex-col gap-2.5 rounded-[20px] bg-surface p-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[17px] font-semibold">
+              {itemCount} {itemCount === 1 ? 'item' : 'itens'}
+            </span>
+            <button
+              type="button"
+              onClick={() => navigate(`/${store.slug}/carrinho`)}
+              className="text-sm font-semibold text-caramel"
+            >
+              Alterar
+            </button>
+          </div>
+          <ul className="flex flex-col gap-2 text-[15px] tabular-nums">
+            {groupCartItems(items).map((group) => {
+              if (group.type === 'combo') {
+                const comboTotal = group.items.reduce((sum, item) => sum + itemUnitPrice(item) * item.quantity, 0)
+                return (
+                  <li key={group.comboGroupId} className="flex flex-col gap-1">
+                    <span className="w-fit rounded-full bg-chosen px-2 py-0.5 text-xs font-semibold text-caramel">Combo</span>
+                    <div className="flex justify-between gap-3">
+                      <span>{group.items.map((item) => `${item.quantity}× ${item.product.name}`).join(' + ')}</span>
+                      <span className="shrink-0">{formatPrice(comboTotal).replace('R$', '').trim()}</span>
+                    </div>
+                  </li>
+                )
+              }
+              const { id, product, quantity, addons, variations } = group.item
+              const detailLine = [...variations.map((v) => v.name), ...addons.map((a) => a.name)].join(', ')
+              return (
+                <li key={id} className="flex justify-between gap-3">
+                  <span>
+                    {quantity}× {product.name}
+                    {detailLine && <span className="text-muted"> {detailLine}</span>}
+                  </span>
+                  <span className="shrink-0">{formatPrice(itemUnitPrice(group.item) * quantity).replace('R$', '').trim()}</span>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+
+        <p className="text-sm text-muted">{paymentNote}</p>
+
+        {status === 'error' && (
+          <div role="alert" className="flex flex-col gap-2 rounded-[20px] bg-[#3a1f1c] p-4 text-[15px] text-danger">
+            <p>Não foi possível confirmar seu pedido. {errorMessage}</p>
+            {stockRefreshed && (
+              <>
+                <p className="text-ink">Atualizamos sua sacola com o estoque disponível agora. Confira as quantidades.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/${store.slug}/carrinho`)}
+                  className="mt-1 self-start text-[15px] font-semibold text-caramel"
+                >
+                  Revisar sacola
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-20 flex justify-center">
+        <div className="flex w-full max-w-[430px] flex-col gap-2.5 rounded-t-3xl bg-surface px-5 pt-3.5 pb-[max(20px,env(safe-area-inset-bottom))]">
+          <div className="flex items-baseline justify-between tabular-nums">
+            <span className="text-[15px] text-muted">Total</span>
+            <span className="text-lg font-semibold">
+              {formatPrice(regular)}
+              {lover < regular && (
+                <span className="text-sm font-medium text-caramel"> Lover {formatPrice(lover).replace('R$', '').trim()}</span>
+              )}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={status === 'submitting' || items.length === 0}
+            className={primaryButtonClass}
+          >
+            {status === 'submitting' ? 'Confirmando…' : 'Confirmar pedido'}
+          </button>
+        </div>
+      </div>
     </PageShell>
   )
 }

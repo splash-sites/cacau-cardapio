@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { E2E_STORE_SLUG } from './staging'
 
 // Fluxo pickup/delivery unificado (CLAUDE.md "Padrões de frontend" / etapa 2 do
-// checkout): card "Para Levar/Entrega" -> orderType chega como 'pickup' ->
+// checkout): botão "Pedir para levar ou entregar" -> orderType chega como 'pickup' ->
 // checkout mostra o toggle retirar/receber só quando a loja aceita os dois.
 // Testa o toggle indo e voltando (mostra/esconde endereço) e fecha o fluxo
 // pela opção "Retirar no balcão" — nenhum produto da loja de teste tem
@@ -20,9 +20,9 @@ async function scrollUntilVisible(page: Page, locator: ReturnType<Page['getByRol
   await expect(locator).toBeVisible()
 }
 
-test('Para Levar/Entrega → toggle retirar/receber → confirmação como retirada', async ({ page }) => {
+test('Pedir para levar ou entregar → toggle retirar/receber → confirmação como retirada', async ({ page }) => {
   await page.goto(`/${STORE_SLUG}`)
-  await page.getByRole('button', { name: /Para Levar\/Entrega/ }).click()
+  await page.getByRole('button', { name: /Pedir para levar/ }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/cardapio`)
 
   const addAguaButton = page.getByRole('button', { name: 'Ver detalhes de Água', exact: true })
@@ -33,7 +33,7 @@ test('Para Levar/Entrega → toggle retirar/receber → confirmação como retir
   await dialog.getByRole('button', { name: 'Adicionar ao pedido' }).click()
   await expect(dialog).not.toBeVisible()
 
-  await page.getByRole('button', { name: /Ver carrinho/ }).click()
+  await page.getByRole('button', { name: /Ver sacola/ }).click()
   await page.getByRole('button', { name: 'Continuar' }).click()
   await expect(page).toHaveURL(`/${STORE_SLUG}/identificacao`)
 
@@ -50,10 +50,10 @@ test('Para Levar/Entrega → toggle retirar/receber → confirmação como retir
   await page.getByLabel('Nome completo').fill('Teste Playwright Retirada')
   await page.getByLabel('CPF').fill(VALID_TEST_CPF)
   await page.getByLabel('Telefone').fill('51991726861')
-  await page.getByRole('button', { name: 'Confirmar' }).click()
+  await page.getByRole('button', { name: 'Continuar' }).click()
 
   await expect(page).toHaveURL(`/${STORE_SLUG}/revisao`)
-  await expect(page.getByRole('heading', { name: /^Para Levar/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Retirada no balcão' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Confirmar pedido' }).click()
   await expect(page.getByRole('heading', { name: 'Pedido enviado!' })).toBeVisible({ timeout: 15_000 })

@@ -21,8 +21,8 @@ const OrdersPage = lazy(() => import('./presentation/order/OrdersPage').then((m)
 
 function RouteFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <p className="font-body text-foreground/70">Carregando…</p>
+    <div className="flex min-h-dvh items-center justify-center bg-bg">
+      <p className="text-muted">Carregando…</p>
     </div>
   )
 }
@@ -34,8 +34,8 @@ function App() {
         <Route
           path="/"
           element={
-            <div className="flex min-h-screen items-center justify-center bg-background px-4 text-center">
-              <p className="font-body text-foreground/70">Acesse pelo link da sua loja.</p>
+            <div className="flex min-h-dvh items-center justify-center bg-bg px-4 text-center">
+              <p className="text-muted">Acesse pelo link da sua loja.</p>
             </div>
           }
         />
