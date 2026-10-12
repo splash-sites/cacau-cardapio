@@ -109,13 +109,13 @@ React 19 + Vite 8 + TypeScript `strict` · Tailwind v4 (`@tailwindcss/vite`, tok
 | Rota | Tela |
 |---|---|
 | `/` | "Acesse pelo link da sua loja." |
-| `/:slug` | Escolha do tipo de pedido: **Cafeteria** (`dine_in`) ou **Para Levar/Entrega** (vira `pickup`; `delivery` só se a loja não aceita retirada) |
-| `/:slug/mesa/:numero` | Entrada por QR: já marca `dine_in` + número da mesa e vai pro cardápio (mesa inválida ou loja sem `dine_in` → volta pra escolha) |
+| `/:slug` | Boas-vindas da loja: **Pedir na cafeteria** (`dine_in`) ou **Pedir para levar ou entregar** (vira `pickup`; `delivery` só se a loja não aceita retirada) + "Ver meus pedidos" |
+| `/:slug/mesa/:numero` | Entrada por QR: já marca `dine_in` + número da mesa e mostra "Você está na mesa N" com "Ver o cardápio" (e "Pedir para levar", que limpa a mesa). Mesa inválida ou loja sem `dine_in` → volta pra escolha |
 | `/:slug/atacado` | Entrada da revenda (só com `reseller_enabled`): canal `reseller`, só retirada |
 | `/:slug/cardapio` | Cardápio por categoria + carrossel de promoções |
-| `/:slug/carrinho` | Carrinho |
+| `/:slug/carrinho` | Sacola |
 | `/:slug/identificacao` | Nome, CPF, telefone; toggle "Retirar no balcão / Receber em casa" (só varejo, loja com os dois); endereço só se entrega |
-| `/:slug/revisao` | Revisão → `confirm_order` → acompanhamento |
+| `/:slug/revisao` | "Tudo certo?" (resumo com "Alterar") → `confirm_order` → acompanhamento |
 | `/:slug/pedidos` | "Meus pedidos" por CPF (`list_orders_by_cpf`) |
 
 ### Regras deste app
@@ -131,9 +131,9 @@ React 19 + Vite 8 + TypeScript `strict` · Tailwind v4 (`@tailwindcss/vite`, tok
 - Sem pagamento no sistema: combinado na entrega/retirada/mesa.
 
 ### Identidade visual (mobile-first — maioria usa no celular)
-- Paleta (tokens no `@theme`): `background #F0ECD2` / `foreground #030404` · `primary #CF9047` (CTA) · `secondary #7B431B` · `accent #2C120B`.
-- Status do pedido em cor funcional do Tailwind: `received`/`preparing` âmbar · `out_for_delivery`/`delivered` azul · `finalized` verde · `cancelled` vermelho. Acompanhamento numerado (é sequência real).
-- Fontes: `--font-display` **Orelega One** (títulos, nome de produto; só peso 400 — `font-bold` não engrossa de verdade) · `--font-body` **Inter**.
+- Identidade **Ganache** (redesenho 2026-10-12, canvas no Claude Design; design system "Splash Pedidos"). Cardápio em **tema escuro**: tokens no `@theme` — `bg #1b110e`, `surface`/`surface-2`, `tile` (miniatura sem foto), `ink #f6ede6`, `soft`/`muted`/`faint`, `caramel #e8a75c` (botão principal, preço Lover, aba ativa), `chosen` (opção escolhida), `line`/`line-strong`. Classes prontas em `presentation/shared/ui.ts` (botões, campo, cartão de opção, título de etapa).
+- Telas: entrada com boas-vindas (`StoreHero`, sem foto por enquanto: blocos nas cores da marca), lista com miniatura de **altura fixa** (`PRODUCT_ROW_HEIGHT_PX`, a lista é virtualizada), produto **em etapas** (cada grupo de variação/adicional é um passo; quantidade e observação no último), fechamento em 3 telas com `CheckoutHeader` (Sacola / Seus dados / Confirmar), acompanhamento em linha do tempo.
+- Fontes: `--font-display` **Bricolage Grotesque** (títulos, nome do produto na etapa) · `--font-body` **Figtree**. Preço com `tabular-nums`, sempre "R$ X" e ao lado "Lover R$ Y" em caramelo (só quando o Lover é menor).
 - Área de toque mínima **44x44px** no carrinho/checkout. Imagem de produto lazy. Desenhar pro celular primeiro.
 
 ### Checklist antes de dar uma tarefa como pronta
