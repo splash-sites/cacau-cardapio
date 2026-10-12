@@ -11,7 +11,17 @@ interface OrderRow {
   status: string
   table_number: string | null
   created_at: string
-  items: { product_name: string; quantity: number; unit_price: number; note: string | null }[] | null
+  items:
+    | {
+        product_name: string
+        quantity: number
+        unit_price: number
+        note: string | null
+        // chaves novas (migration 20261012190000): ausentes enquanto a função antiga estiver no banco
+        addons_unit_price?: number
+        addons?: string[]
+      }[]
+    | null
 }
 
 function toOrderSummary(row: OrderRow): OrderSummary {
@@ -25,6 +35,8 @@ function toOrderSummary(row: OrderRow): OrderSummary {
       productName: item.product_name,
       quantity: item.quantity,
       unitPrice: item.unit_price,
+      addonsUnitPrice: Number(item.addons_unit_price ?? 0),
+      addonNames: item.addons ?? [],
       note: item.note,
     })),
   }

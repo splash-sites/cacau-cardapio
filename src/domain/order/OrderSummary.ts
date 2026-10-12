@@ -5,6 +5,9 @@ export interface OrderItemSummary {
   productName: string
   quantity: number
   unitPrice: number
+  /** Soma dos adicionais por unidade (preço × quantidade de cada adicional). */
+  addonsUnitPrice: number
+  addonNames: string[]
   note: string | null
 }
 

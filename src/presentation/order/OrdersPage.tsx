@@ -61,6 +61,7 @@ function OrderCard({ order }: { order: OrderSummary }) {
         {order.items.map((item, index) => (
           <li key={index}>
             {item.quantity}× {item.productName}
+            {item.addonNames.length > 0 && <span className="text-muted"> {item.addonNames.join(', ')}</span>}
             {item.note && <span className="text-muted"> ({item.note})</span>}
           </li>
         ))}
