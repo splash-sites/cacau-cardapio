@@ -437,3 +437,6 @@ src/
 
 ## 2026-10-13 — Release v1.3.0 (produção): marca Prestio
 - Nome, logo e favicon da Prestio no ar (detalhes na entrada "Nome novo: Prestio" acima). Antes da subida: E2E painel 14/14 e cardápio 5/5 no staging, unitários, lint e build limpos.
+
+## 2026-10-13 — Release v1.3.1: revenda em /revendedor
+- Cardápio da revenda passa a ser `/:slug/revendedor`. O endereço antigo `/:slug/atacado` redireciona pro novo, então links já enviados continuam funcionando.
