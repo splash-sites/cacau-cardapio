@@ -422,3 +422,7 @@ src/
 ## Escalabilidade
 - Índice em `store_id` em toda tabela filtrada por loja. Paginação obrigatória em listagem.
 - Code-splitting por rota. Imagens de produto otimizadas/lazy — impacto direto em conversão.
+
+## 2026-10-12 — Release v1.2.0 (produção): redesenho Ganache
+- Cardápio em tema escuro: boas-vindas da loja e da mesa (QR agora mostra "Você está na mesa N" antes do cardápio), lista com miniatura e abas, produto em etapas, fechamento em 3 telas (Sacola / Seus dados / Confirmar) e acompanhamento em linha do tempo. Detalhes no `docs/redesign-plano.md` do painel.
+- "Meus pedidos" passa a somar os adicionais no total e a mostrar o nome deles (migration `20261012190000` no painel).
