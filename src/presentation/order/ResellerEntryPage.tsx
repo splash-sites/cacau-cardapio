@@ -3,9 +3,9 @@ import { Navigate } from 'react-router-dom'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { useOrderType } from './useOrderType'
 
-// Entrada do canal de revendedor (/:storeSlug/atacado). Mesmas telas do varejo
+// Entrada do canal de revendedor (/:storeSlug/revendedor; o antigo /atacado redireciona pra cá). Mesmas telas do varejo
 // dali em diante — a diferença é só o canal no estado. Revendedor só retira no
-// local: sempre 'pickup' (sem mesa, sem entrega). Loja sem retirada não tem atacado.
+// local: sempre 'pickup' (sem mesa, sem entrega). Loja sem retirada não tem revenda.
 // `ready` pelo mesmo motivo do TableEntryPage: estado setado antes do <Navigate>.
 export function ResellerEntryPage() {
   const store = useCurrentStore()

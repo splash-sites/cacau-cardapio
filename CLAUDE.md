@@ -88,7 +88,7 @@ Rodando junto com o painel: cardápio em `--port 5175`, painel em `--port 5176` 
 ### Canais e cardápio
 - Tipos de pedido: `dine_in` (mesa/cafeteria), `pickup` (retirada), `delivery` (entrega). Loja liga cada um em `stores.supports_*`.
 - No cardápio, retirada e entrega são **um cardápio só**, filtrado por `available_pickup`. `available_delivery` está aposentado (fica no banco, ninguém usa).
-- **Revenda** (`/:slug/atacado`, só se `stores.reseller_enabled`): filtra por `available_reseller`, pedido com `sales_channel = 'reseller'`, só retirada (nunca mesa).
+- **Revenda** (`/:slug/revendedor`, só se `stores.reseller_enabled`): filtra por `available_reseller`, pedido com `sales_channel = 'reseller'`, só retirada (nunca mesa).
 - Mesa via QR: `/:slug/mesa/:numero` (gerado em Configurações do painel com `VITE_STOREFRONT_URL`).
 - Ordem no cardápio: categorias, produtos, grupos de adicional/variação e as opções dentro de cada grupo, todos por `sort_order`, definida no painel.
 
@@ -111,7 +111,7 @@ React 19 + Vite 8 + TypeScript `strict` · Tailwind v4 (`@tailwindcss/vite`, tok
 | `/` | "Acesse pelo link da sua loja." |
 | `/:slug` | Boas-vindas da loja: **Pedir na cafeteria** (`dine_in`) ou **Pedir para levar ou entregar** (vira `pickup`; `delivery` só se a loja não aceita retirada) + "Ver meus pedidos" |
 | `/:slug/mesa/:numero` | Entrada por QR: já marca `dine_in` + número da mesa e mostra "Você está na mesa N" com "Ver o cardápio" (e "Pedir para levar", que limpa a mesa). Mesa inválida ou loja sem `dine_in` → volta pra escolha |
-| `/:slug/atacado` | Entrada da revenda (só com `reseller_enabled`): canal `reseller`, só retirada |
+| `/:slug/revendedor` | Entrada da revenda (só com `reseller_enabled`): canal `reseller`, só retirada. O endereço antigo `/:slug/atacado` redireciona pra cá |
 | `/:slug/cardapio` | Cardápio por categoria + carrossel de promoções |
 | `/:slug/carrinho` | Sacola |
 | `/:slug/identificacao` | Nome, CPF, telefone; toggle "Retirar no balcão / Receber em casa" (só varejo, loja com os dois); endereço só se entrega |

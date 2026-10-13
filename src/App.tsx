@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { StoreLayout } from './presentation/store/StoreLayout'
 
 const OrderTypeSelectionPage = lazy(() =>
@@ -42,7 +42,9 @@ function App() {
         <Route path="/:storeSlug" element={<StoreLayout />}>
           <Route index element={<OrderTypeSelectionPage />} />
           <Route path="mesa/:numeroMesa" element={<TableEntryPage />} />
-          <Route path="atacado" element={<ResellerEntryPage />} />
+          <Route path="revendedor" element={<ResellerEntryPage />} />
+          {/* endereço antigo da revenda: links já enviados continuam funcionando */}
+          <Route path="atacado" element={<Navigate to="../revendedor" replace />} />
           <Route path="cardapio" element={<MenuPage />} />
           <Route path="carrinho" element={<CartPage />} />
           <Route path="identificacao" element={<IdentificationPage />} />
