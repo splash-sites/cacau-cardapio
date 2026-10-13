@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Identidade Ganache, tema escuro do cardápio (design system "Splash Pedidos"). */
+  /* Identidade Ganache, tema escuro do cardápio (design system "Prestio"). */
   --color-bg: #1b110e;
   --color-surface: #241713;
   --color-surface-2: #2a1b16;

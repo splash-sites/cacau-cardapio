@@ -1,4 +1,4 @@
-# CLAUDE.md — Cardápio do cliente (Splash Pedidos)
+# CLAUDE.md — Cardápio do cliente (Prestio)
 
 Regras **vigentes**. Histórico de decisões (o "porquê" de cada coisa): [docs/historico.md](docs/historico.md). Pendências dos dois repos: `painel-adm-cacau/docs/backlog.md`. Banco: `painel-adm-cacau/supabase/` (este repo não tem migration — o schema mora no painel).
 
@@ -16,12 +16,12 @@ node scripts/check-shared-rules.mjs   # confere se o bloco "Regras compartilhada
 Rodando junto com o painel: cardápio em `--port 5175`, painel em `--port 5176` (o painel aponta `VITE_STOREFRONT_URL` pra `http://localhost:5175`).
 
 <!-- REGRAS-COMPARTILHADAS:INICIO -->
-## Regras compartilhadas (Splash Pedidos)
+## Regras compartilhadas (Prestio)
 
 > **Este bloco é idêntico no `CLAUDE.md` do `painel-adm-cacau` e do `cacau-cardapio`.** Mudou aqui, muda lá no mesmo commit — `node scripts/check-shared-rules.mjs` compara os dois e falha se divergirem. Última conferência contra o banco real: 2026-10-11.
 
 ### Produto e repositórios
-- **Splash Pedidos**: SaaS de pedidos multi-loja. Primeira cliente: Kaká o Show (Cacau Show Torres e Capão da Canoa). Tudo precisa servir qualquer loja futura — nada de nome de loja fixo no código.
+- **Prestio** (até 2026-10-12 se chamava Splash Pedidos): SaaS de pedidos multi-loja. Primeira cliente: Kaká o Show (Cacau Show Torres e Capão da Canoa). Tudo precisa servir qualquer loja futura — nada de nome de loja fixo no código.
 - `painel-adm-cacau` = painel da loja (login, pedidos, catálogo, relatórios). `cacau-cardapio` = cardápio do cliente final (sem login). Os dois falam **direto** com o mesmo Supabase (sem backend próprio); deploy de cada um na Vercel.
 - Lugar de cada coisa: regra vigente → `CLAUDE.md` · decisões antigas e o porquê → `docs/historico.md` · pendências → `painel-adm-cacau/docs/backlog.md` · banco → `painel-adm-cacau/supabase/`.
 
@@ -131,9 +131,10 @@ React 19 + Vite 8 + TypeScript `strict` · Tailwind v4 (`@tailwindcss/vite`, tok
 - Sem pagamento no sistema: combinado na entrega/retirada/mesa.
 
 ### Identidade visual (mobile-first — maioria usa no celular)
-- Identidade **Ganache** (redesenho 2026-10-12, canvas no Claude Design; design system "Splash Pedidos"). Cardápio em **tema escuro**: tokens no `@theme` — `bg #1b110e`, `surface`/`surface-2`, `tile` (miniatura sem foto), `ink #f6ede6`, `soft`/`muted`/`faint`, `caramel #e8a75c` (botão principal, preço Lover, aba ativa), `chosen` (opção escolhida), `line`/`line-strong`. Classes prontas em `presentation/shared/ui.ts` (botões, campo, cartão de opção, título de etapa).
+- Identidade **Ganache** (redesenho 2026-10-12, canvas no Claude Design; design system "Splash Pedidos" no Claude Design). Cardápio em **tema escuro**: tokens no `@theme` — `bg #1b110e`, `surface`/`surface-2`, `tile` (miniatura sem foto), `ink #f6ede6`, `soft`/`muted`/`faint`, `caramel #e8a75c` (botão principal, preço Lover, aba ativa), `chosen` (opção escolhida), `line`/`line-strong`. Classes prontas em `presentation/shared/ui.ts` (botões, campo, cartão de opção, título de etapa).
 - Telas: entrada com boas-vindas (`StoreHero`, sem foto por enquanto: blocos nas cores da marca), lista com miniatura de **altura fixa** (`PRODUCT_ROW_HEIGHT_PX`, a lista é virtualizada), produto **em etapas** (cada grupo de variação/adicional é um passo; quantidade e observação no último), fechamento em 3 telas com `CheckoutHeader` (Sacola / Seus dados / Confirmar), acompanhamento em linha do tempo.
 - Fontes: `--font-display` **Bricolage Grotesque** (títulos, nome do produto na etapa) · `--font-body` **Figtree**. Preço com `tabular-nums`, sempre "R$ X" e ao lado "Lover R$ Y" em caramelo (só quando o Lover é menor).
+- O cardápio é da loja: a marca **Prestio** aparece só no favicon e no "feito com prestio" (`shared/PoweredBy.tsx`, logo `public/prestio-logo-negativo.svg`) no rodapé da entrada da loja e da mesa.
 - Área de toque mínima **44x44px** no carrinho/checkout. Imagem de produto lazy. Desenhar pro celular primeiro.
 
 ### Checklist antes de dar uma tarefa como pronta

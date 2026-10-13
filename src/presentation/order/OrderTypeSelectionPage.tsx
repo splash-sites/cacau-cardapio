@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import type { OrderType } from '../../domain/order/OrderType'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { PageShell } from '../shared/PageShell'
+import { PoweredBy } from '../shared/PoweredBy'
 import { StoreHero } from '../store/StoreHero'
 import { useOrderType } from './useOrderType'
 
@@ -66,6 +67,7 @@ export function OrderTypeSelectionPage() {
           Ver meus pedidos
         </Link>
       </div>
+      <PoweredBy />
     </PageShell>
   )
 }

@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { PageShell } from '../shared/PageShell'
+import { PoweredBy } from '../shared/PoweredBy'
 import { StoreHero } from '../store/StoreHero'
 import { useOrderType } from './useOrderType'
 
@@ -72,6 +73,7 @@ export function TableEntryPage() {
           </button>
         )}
       </div>
+      <PoweredBy />
     </PageShell>
   )
 }
