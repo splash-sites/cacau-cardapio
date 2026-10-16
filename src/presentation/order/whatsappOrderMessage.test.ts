@@ -54,19 +54,19 @@ describe('buildWhatsappOrderMessage', () => {
       },
     ]
 
-    const message = buildWhatsappOrderMessage('Cacau Show Torres', customer, items)
+    const message = buildWhatsappOrderMessage('Brasa Burger', customer, items)
 
     expect(message).toContain('CPF: 529.982.247-25')
     expect(message).toContain('Rua das Flores, 100')
     expect(message).toContain('2x Capuccino (Grande)')
-    expect(message).toContain(`Total Cacau Lovers*: ${formatPrice(18)}`)
-    expect(message).toContain(`Total Não Lover: ${formatPrice(20)}`)
-    expect(message).toContain('Cacau Lover')
+    expect(message).toContain(`Total preço de clube*: ${formatPrice(18)}`)
+    expect(message).toContain(`Total preço normal: ${formatPrice(20)}`)
+    expect(message).toContain('se o cliente é do clube')
   })
 
   it('sem variação/adicional não mostra parênteses vazio', () => {
     const items: CartItem[] = [{ id: 'p1', product: makeProduct(), quantity: 1, addons: [], variations: [] }]
-    const message = buildWhatsappOrderMessage('Cacau Show Torres', customer, items)
+    const message = buildWhatsappOrderMessage('Brasa Burger', customer, items)
     expect(message).toContain('1x Capuccino —')
     expect(message).not.toContain('()')
   })
@@ -97,7 +97,7 @@ describe('buildWhatsappOrderMessage', () => {
         discountedLoverUnitPrice: 5,
       },
     ]
-    const message = buildWhatsappOrderMessage('Cacau Show Torres', customer, items)
+    const message = buildWhatsappOrderMessage('Brasa Burger', customer, items)
     expect(message).toContain('• Combo:')
     expect(message).toContain('- 1x Água')
     expect(message).toContain('- 1x Capuccino')

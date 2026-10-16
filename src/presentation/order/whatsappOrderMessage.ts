@@ -47,10 +47,10 @@ export function buildWhatsappOrderMessage(storeName: string, customer: Customer,
     'Itens:',
     ...groupCartItems(items).flatMap(formatGroupLines),
     '',
-    `Total Cacau Lovers*: ${formatPrice(cartLoverTotal(items))}`,
-    `Total Não Lover: ${formatPrice(cartTotal(items))}`,
+    `Total preço de clube*: ${formatPrice(cartLoverTotal(items))}`,
+    `Total preço normal: ${formatPrice(cartTotal(items))}`,
     '',
-    'Obs: o CPF será validado na entrega pra confirmar se o cliente é Cacau Lover.',
+    'Obs: o CPF será validado na entrega pra confirmar se o cliente é do clube.',
   ]
   return lines.join('\n')
 }
