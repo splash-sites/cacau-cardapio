@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import type { Product } from '../../domain/menu/Product'
 import { useCart } from '../cart/useCart'
 import { ProductThumb } from '../shared/ProductThumb'
 import { formatPrice } from './formatPrice'
 import { ProductDetailModal } from './ProductDetailModal'
+import { productAddonsQuery } from './useProductAddons'
+import { productVariationsQuery } from './useProductVariations'
 
 // Altura FIXA da linha (cabe nome em 2 linhas + descrição + preço; 117px com a borda).
 // É o que deixa a lista virtualizada do MenuPage pousar exato ao tocar numa
@@ -12,17 +15,28 @@ import { ProductDetailModal } from './ProductDetailModal'
 export const PRODUCT_ROW_HEIGHT_PX = 117
 
 export function ProductCard({ product }: { product: Product }) {
+  const queryClient = useQueryClient()
   const [detailOpen, setDetailOpen] = useState(false)
   const quantityInCart = useCart((state) =>
     state.items.filter((item) => item.product.id === product.id && !item.comboGroupId).reduce((sum, item) => sum + item.quantity, 0),
   )
   const hasLover = product.loverPrice < product.price
 
+  // Começa a buscar as opções no toque (antes do clique) pra o modal já abrir sabendo as etapas.
+  function prefetchOptions() {
+    void queryClient.prefetchQuery(productAddonsQuery(product.id))
+    void queryClient.prefetchQuery(productVariationsQuery(product.id))
+  }
+
   return (
     <>
       <button
         type="button"
-        onClick={() => setDetailOpen(true)}
+        onPointerDown={prefetchOptions}
+        onClick={() => {
+          prefetchOptions()
+          setDetailOpen(true)
+        }}
         aria-label={`Ver detalhes de ${product.name}`}
         className="flex w-full items-center gap-3.5 border-b border-line py-3.5 text-left transition-colors active:bg-surface"
         style={{ height: PRODUCT_ROW_HEIGHT_PX }}

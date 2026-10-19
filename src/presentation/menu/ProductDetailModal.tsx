@@ -21,7 +21,6 @@ import {
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
 import { FixedBottomBar } from '../shared/FixedBottomBar'
-import { ProductThumb } from '../shared/ProductThumb'
 import { StepHeader } from '../shared/StepHeader'
 import { primaryButtonClass, stepTitleClass } from '../shared/ui'
 import { AddonGroupSection } from './AddonGroupSection'
@@ -37,9 +36,11 @@ const TRANSITION_MS = 260
 type Step = { kind: 'variation'; group: VariationGroup } | { kind: 'addon'; group: AddonGroup }
 
 /**
- * Produto em tela cheia, uma pergunta por etapa: cada grupo de variação (obrigatório)
- * e cada grupo de adicional (opcional) vira um passo. Quantidade e observação ficam
- * no último passo, junto do botão de adicionar. Produto sem opções é um passo só.
+ * Produto em tela cheia. Sempre abre na apresentação (foto grande, descrição, preço);
+ * se tiver opções, "Escolher opções" leva a uma pergunta por etapa: cada grupo de
+ * variação (obrigatório) e cada grupo de adicional (opcional) vira um passo. Quantidade
+ * e observação ficam no último passo, junto do botão de adicionar. Produto sem opções
+ * é só a apresentação.
  */
 export function ProductDetailModal({ product, onClose }: { product: Product; onClose: () => void }) {
   const addItem = useCart((state) => state.addItem)
@@ -95,8 +96,9 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
     ...varGroups.map((group): Step => ({ kind: 'variation', group })),
     ...groups.map((group): Step => ({ kind: 'addon', group })),
   ]
-  const totalSteps = Math.max(steps.length, 1)
-  const step: Step | undefined = steps[stepIndex]
+  // Índice 0 é sempre a apresentação do produto; as opções vêm a partir do índice 1.
+  const totalSteps = 1 + steps.length
+  const step: Step | undefined = stepIndex > 0 ? steps[stepIndex - 1] : undefined
   const isLastStep = stepIndex >= totalSteps - 1
 
   // Saldo do produto no canal limitando o carrinho (null = sem limite).
@@ -140,16 +142,17 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
       }`}
     >
       <div className="mx-auto flex min-h-full w-full max-w-[430px] flex-col pb-44">
+        {/* A apresentação não conta como passo: "Passo X de Y" só nas etapas de opção. */}
         <StepHeader
-          step={stepIndex + 1}
-          total={totalSteps}
+          step={stepIndex}
+          total={stepIndex > 0 ? steps.length : 1}
           onBack={() => (stepIndex > 0 ? setStepIndex((index) => index - 1) : handleClose())}
           backLabel={stepIndex > 0 ? 'Voltar' : 'Voltar ao cardápio'}
         />
 
         <div className="flex flex-col gap-3.5 px-5 pt-5">
           {stepIndex === 0 ? (
-            <ProductIntro product={product} onOpenImage={() => setLightboxOpen(true)} compact={!!step} />
+            <ProductIntro product={product} onOpenImage={() => setLightboxOpen(true)} />
           ) : (
             <span className="text-sm text-muted">
               {[product.name, ...variations.map((variation) => variation.name)].join(', ')}
@@ -167,7 +170,6 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
         </div>
 
         <div className="flex flex-col gap-3 px-5 pt-6">
-          {optionsLoading && <p className="text-muted">Carregando opções…</p>}
           {optionsLoadError && (
             <p className="text-danger">Não foi possível carregar as opções deste produto. Volte e abra de novo.</p>
           )}
@@ -258,7 +260,13 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           </div>
         )}
         <button type="button" onClick={handlePrimary} disabled={primaryDisabled} className={primaryButtonClass}>
-          {isLastStep ? 'Adicionar ao pedido' : 'Continuar'}
+          {optionsLoading
+            ? 'Carregando opções…'
+            : isLastStep
+              ? 'Adicionar ao pedido'
+              : stepIndex === 0
+                ? 'Escolher opções'
+                : 'Continuar'}
         </button>
       </FixedBottomBar>
 
@@ -275,35 +283,9 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
   )
 }
 
-/** Primeira etapa: foto (ou miniatura), nome, descrição e preço do produto. */
-function ProductIntro({
-  product,
-  onOpenImage,
-  compact,
-}: {
-  product: Product
-  onOpenImage: () => void
-  compact: boolean
-}) {
+/** Apresentação do produto (igual pra todos, com ou sem opções): foto grande, nome, descrição e preço. */
+function ProductIntro({ product, onOpenImage }: { product: Product; onOpenImage: () => void }) {
   const hasLover = product.loverPrice < product.price
-
-  if (compact) {
-    return (
-      <div className="flex items-center gap-3.5">
-        {product.imageUrl ? (
-          <button type="button" onClick={onOpenImage} aria-label={`Ver foto de ${product.name}`} className="rounded-[18px]">
-            <ProductThumb name={product.name} imageUrl={product.imageUrl} size={64} />
-          </button>
-        ) : (
-          <ProductThumb name={product.name} imageUrl={null} size={64} />
-        )}
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[17px] font-semibold">{product.name}</span>
-          {product.description && <span className="text-[13px] text-muted">{product.description}</span>}
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col gap-4">

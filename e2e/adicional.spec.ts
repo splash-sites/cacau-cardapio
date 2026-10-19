@@ -35,8 +35,11 @@ test('adicional múltiplo (Bytes + Granulado) em produto com variação obrigat�
 
   const dialog = page.getByRole('dialog', { name: 'Fondue' })
   await expect(dialog).toBeVisible()
-  // Produto em etapas: cada grupo de variação é um passo, com "Continuar" travado
+  // Abre sempre na apresentação (foto grande, descrição, preço); "Escolher opções"
+  // leva às etapas. Cada grupo de variação é um passo, com "Continuar" travado
   // até escolher. Os adicionais vêm depois, no último passo com "Adicionar ao pedido".
+  await expect(dialog.getByRole('heading', { name: 'Fondue' })).toBeVisible()
+  await dialog.getByRole('button', { name: 'Escolher opções' }).click()
   const nextButton = dialog.getByRole('button', { name: 'Continuar' })
   await expect(nextButton).toBeDisabled()
   for (let step = 0; step < 2; step++) {
