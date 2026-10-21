@@ -440,3 +440,8 @@ src/
 
 ## 2026-10-13 — Release v1.3.1: revenda em /revendedor
 - Cardápio da revenda passa a ser `/:slug/revendedor`. O endereço antigo `/:slug/atacado` redireciona pro novo, então links já enviados continuam funcionando.
+
+## 2026-10-21 — Release v1.3.5: produto abre sempre na apresentação
+- Corrige a piscada ao tocar num produto com opções (ex: fondue): o modal mostrava a foto grande por um instante e trocava pra tela de adicionais quando as opções carregavam.
+- Todo produto abre agora na mesma apresentação (foto grande 4:3, descrição, preço). Com variação/adicional, o botão "Escolher opções" leva às etapas; sem opções, quantidade e "Adicionar ao pedido" ficam na própria apresentação. As opções começam a carregar já no toque no card.
+- Antes da subida: unitários 199/199 (incluindo teste novo do modal), lint e build limpos, fluxo validado no navegador na `/splash-teste` (com variação, sem opções e rede lenta). E2E de staging não rodado (sem `.env.staging.local` nesta máquina).
