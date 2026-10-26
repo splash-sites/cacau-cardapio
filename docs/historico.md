@@ -445,3 +445,7 @@ src/
 - Corrige a piscada ao tocar num produto com opções (ex: fondue): o modal mostrava a foto grande por um instante e trocava pra tela de adicionais quando as opções carregavam.
 - Todo produto abre agora na mesma apresentação (foto grande 4:3, descrição, preço). Com variação/adicional, o botão "Escolher opções" leva às etapas; sem opções, quantidade e "Adicionar ao pedido" ficam na própria apresentação. As opções começam a carregar já no toque no card.
 - Antes da subida: unitários 199/199 (incluindo teste novo do modal), lint e build limpos, fluxo validado no navegador na `/splash-teste` (com variação, sem opções e rede lenta). E2E de staging não rodado (sem `.env.staging.local` nesta máquina).
+
+## 2026-10-26 — Release v1.3.6: aviso de pagamento na revisão
+- Tela "Tudo certo?": cafeteria passa a dizer "Pagamento no caixa." (antes "Pagamento na mesa, com a atendente."); entrega passa a dizer "Pagamento via pix no WhatsApp da loja." (antes "Pagamento na entrega."). Retirada sem mudança.
+- Só texto (`ReviewPage.tsx`), sem mudança de lógica nem de banco. Antes da subida: unitários 199/199, lint e build limpos, textos conferidos no navegador contra o staging (cafeteria, entrega e retirada).
