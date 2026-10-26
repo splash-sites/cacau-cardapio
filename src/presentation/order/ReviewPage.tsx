@@ -128,9 +128,9 @@ export function ReviewPage() {
         : 'Retirada no balcão'
   const paymentNote =
     orderType === 'dine_in'
-      ? 'Pagamento na mesa, com a atendente.'
+      ? 'Pagamento no caixa.'
       : orderType === 'delivery'
-        ? 'Pagamento na entrega.'
+        ? 'Pagamento via pix no WhatsApp da loja.'
         : 'Pagamento na retirada, direto no balcão.'
   const canSwitchFulfillment =
     orderType !== 'dine_in' && salesChannel === 'retail' && store.supportsPickup && store.supportsDelivery
