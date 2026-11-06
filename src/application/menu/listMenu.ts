@@ -1,4 +1,4 @@
-import { groupByCategory } from '../../domain/menu/groupByCategory'
+import { groupByCategory, menuChannelFor } from '../../domain/menu/groupByCategory'
 import { isProductAvailableForOrderType, isProductAvailableForReseller } from '../../domain/menu/productAvailability'
 import type { OrderType } from '../../domain/order/OrderType'
 import type { SalesChannel } from '../../domain/order/SalesChannel'
@@ -12,11 +12,12 @@ export async function listMenu(
   orderType: OrderType,
   channel: SalesChannel = 'retail',
 ) {
+  const menuChannel = menuChannelFor(orderType, channel)
   const [products, categories] = await Promise.all([
     productRepo.listProducts(storeId, channel),
-    categoryRepo.listCategories(storeId),
+    categoryRepo.listCategories(storeId, menuChannel),
   ])
   const isAvailable = channel === 'reseller' ? isProductAvailableForReseller : isProductAvailableForOrderType
   const available = products.filter((product) => isAvailable(product, orderType))
-  return groupByCategory(available, categories)
+  return groupByCategory(available, categories, menuChannel)
 }

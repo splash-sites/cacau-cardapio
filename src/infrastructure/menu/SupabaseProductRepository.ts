@@ -18,6 +18,8 @@ interface PublicProductRow {
   stock_quantity: number
   track_stock: boolean
   sort_order: number
+  sort_order_pickup: number
+  sort_order_reseller: number
   active: boolean
   available_dine_in: boolean
   available_pickup: boolean
@@ -44,6 +46,8 @@ function toProduct(row: PublicProductRow): Product {
     stockQuantity: row.stock_quantity,
     trackStock: row.track_stock,
     sortOrder: row.sort_order,
+    sortOrderPickup: row.sort_order_pickup,
+    sortOrderReseller: row.sort_order_reseller,
     active: row.active,
     availableDineIn: row.available_dine_in,
     availablePickup: row.available_pickup,
@@ -55,7 +59,7 @@ function toProduct(row: PublicProductRow): Product {
 }
 
 const RETAIL_COLUMNS =
-  'id, store_id, name, category, category_id, description, image_url, unit, price, lover_price, stock_quantity, track_stock, sort_order, active, available_dine_in, available_pickup, available_delivery'
+  'id, store_id, name, category, category_id, description, image_url, unit, price, lover_price, stock_quantity, track_stock, sort_order, sort_order_pickup, sort_order_reseller, active, available_dine_in, available_pickup, available_delivery'
 
 // Colunas do revendedor só são pedidas no canal de revendedor — o varejo nunca
 // lê coluna que não usa.

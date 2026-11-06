@@ -14,7 +14,11 @@ export interface Product {
   loverPrice: number
   stockQuantity: number
   trackStock: boolean
+  // Ordem no cardápio por canal (ver domain/menu/groupByCategory.ts: MenuChannel) — Cafeteria,
+  // Para levar/entrega e Revendedor, cada um com sua própria ordem.
   sortOrder: number
+  sortOrderPickup: number
+  sortOrderReseller: number
   active: boolean
   availableDineIn: boolean
   availablePickup: boolean

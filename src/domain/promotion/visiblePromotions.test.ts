@@ -18,6 +18,8 @@ function makeProduct(id: string): Product {
     stockQuantity: 5,
     trackStock: false,
     sortOrder: 0,
+    sortOrderPickup: 0,
+    sortOrderReseller: 0,
     active: true,
     availableDineIn: true,
     availablePickup: true,

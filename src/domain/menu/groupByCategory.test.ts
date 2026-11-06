@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Category } from './Category'
-import { groupByCategory } from './groupByCategory'
+import { groupByCategory, menuChannelFor } from './groupByCategory'
 import type { Product } from './Product'
 
 function makeProduct(overrides: Partial<Product>): Product {
@@ -18,6 +18,8 @@ function makeProduct(overrides: Partial<Product>): Product {
     stockQuantity: 1,
     trackStock: false,
     sortOrder: 0,
+    sortOrderPickup: 0,
+    sortOrderReseller: 0,
     active: true,
     availableDineIn: true,
     availablePickup: true,
@@ -94,5 +96,40 @@ describe('groupByCategory', () => {
 
   it('lista vazia retorna mapa vazio', () => {
     expect(groupByCategory([], []).size).toBe(0)
+  })
+
+  it('ordena produtos de forma independente por canal (dine_in, pickup, reseller)', () => {
+    const natal = makeProduct({ id: '1', categoryId: 'cat-doces', name: 'Especial de Natal', sortOrder: 0, sortOrderPickup: 5, sortOrderReseller: 5 })
+    const trufa = makeProduct({ id: '2', categoryId: 'cat-doces', name: 'Trufa', sortOrder: 1, sortOrderPickup: 0, sortOrderReseller: 0 })
+    const products = [natal, trufa]
+
+    expect(groupByCategory(products, [doces], 'dine_in').get('Doces')?.map((p) => p.name)).toEqual([
+      'Especial de Natal',
+      'Trufa',
+    ])
+    expect(groupByCategory(products, [doces], 'pickup').get('Doces')?.map((p) => p.name)).toEqual([
+      'Trufa',
+      'Especial de Natal',
+    ])
+    expect(groupByCategory(products, [doces], 'reseller').get('Doces')?.map((p) => p.name)).toEqual([
+      'Trufa',
+      'Especial de Natal',
+    ])
+  })
+})
+
+describe('menuChannelFor', () => {
+  it('reseller vence, independente do orderType', () => {
+    expect(menuChannelFor('dine_in', 'reseller')).toBe('reseller')
+    expect(menuChannelFor('pickup', 'reseller')).toBe('reseller')
+  })
+
+  it('retail + dine_in é o canal Cafeteria', () => {
+    expect(menuChannelFor('dine_in', 'retail')).toBe('dine_in')
+  })
+
+  it('retail + pickup/delivery cai no canal Para levar/entrega (mesmo cardápio dos dois, ver CLAUDE.md)', () => {
+    expect(menuChannelFor('pickup', 'retail')).toBe('pickup')
+    expect(menuChannelFor('delivery', 'retail')).toBe('pickup')
   })
 })

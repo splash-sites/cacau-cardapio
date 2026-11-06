@@ -18,6 +18,8 @@ function makeProduct(overrides: Partial<Product> = {}): Product {
     stockQuantity: 0,
     trackStock: false,
     sortOrder: 0,
+    sortOrderPickup: 0,
+    sortOrderReseller: 0,
     active: true,
     availableDineIn: false,
     availablePickup: false,

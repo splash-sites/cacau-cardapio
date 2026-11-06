@@ -145,14 +145,6 @@ export function MenuPage() {
         </button>
       </header>
 
-      {salesChannel === 'reseller' && (
-        <div className="px-5 pb-4">
-          <p className="font-display text-[28px] font-bold leading-[1.05] tracking-tight">
-            Preço de atacado, retirada no balcão
-          </p>
-        </div>
-      )}
-
       {salesChannel === 'retail' && groups && promotions && promotions.length > 0 && (
         <div className="px-5 pb-4">
           <PromotionCarousel promotions={promotions} products={[...groups.values()].flat()} />

@@ -30,6 +30,8 @@ const product: Product = {
   stockQuantity: 0,
   trackStock: false,
   sortOrder: 0,
+  sortOrderPickup: 0,
+  sortOrderReseller: 0,
   active: true,
   availableDineIn: true,
   availablePickup: true,
