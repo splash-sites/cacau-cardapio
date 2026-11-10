@@ -7,12 +7,15 @@ import { formatCpf } from '../../domain/customer/cpf'
 import { maskPhone } from '../../domain/customer/phone'
 import { groupCartItems } from '../../domain/cart/groupCartItems'
 import { isStockError, stockErrorMessage } from '../../domain/order/stockError'
+import { isStoreOpenAt } from '../../domain/store/isStoreOpenAt'
 import { useCart } from '../cart/useCart'
 import { useCustomer } from '../customer/useCustomer'
 import { formatPrice } from '../menu/formatPrice'
 import { supabaseProductRepository } from '../../infrastructure/menu/SupabaseProductRepository'
 import { supabaseOrderRepository } from '../../infrastructure/order/SupabaseOrderRepository'
+import { useBusinessHours } from '../store/useBusinessHours'
 import { useCurrentStore } from '../store/useCurrentStore'
+import { useNow } from '../shared/useNow'
 import { CheckoutHeader } from '../shared/CheckoutHeader'
 import { PageShell } from '../shared/PageShell'
 import { primaryButtonClass, stepTitleClass } from '../shared/ui'
@@ -38,6 +41,9 @@ export function ReviewPage() {
   const items = useCart((state) => state.items)
   const clearCart = useCart((state) => state.clear)
   const refreshStock = useCart((state) => state.refreshStock)
+  const { data: businessHours } = useBusinessHours(store.id)
+  const now = useNow()
+  const isOpen = businessHours ? isStoreOpenAt(businessHours, now) : true
   const queryClient = useQueryClient()
   const customer = useCustomer((state) => state.customer)
   const navigate = useNavigate()
@@ -262,10 +268,10 @@ export function ReviewPage() {
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={status === 'submitting' || items.length === 0}
+            disabled={status === 'submitting' || items.length === 0 || !isOpen}
             className={primaryButtonClass}
           >
-            {status === 'submitting' ? 'Confirmando…' : 'Confirmar pedido'}
+            {status === 'submitting' ? 'Confirmando…' : !isOpen ? 'Loja fechada no momento' : 'Confirmar pedido'}
           </button>
         </div>
       </div>

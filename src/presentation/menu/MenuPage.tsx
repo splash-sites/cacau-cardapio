@@ -4,12 +4,15 @@ import { ChevronLeft, ReceiptText } from 'lucide-react'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { cartItemCount, cartTotal } from '../../domain/cart/Cart'
 import { browsingOrderTypeLabel } from '../../domain/order/orderTypeLabel'
+import { describeHoursForWeekday, isStoreOpenAt } from '../../domain/store/isStoreOpenAt'
 import { useCart } from '../cart/useCart'
 import { useOrderType } from '../order/useOrderType'
+import { useBusinessHours } from '../store/useBusinessHours'
 import { useCurrentStore } from '../store/useCurrentStore'
 import { FixedBottomBar } from '../shared/FixedBottomBar'
 import { PageShell } from '../shared/PageShell'
 import { prefersReducedMotion } from '../shared/prefersReducedMotion'
+import { useNow } from '../shared/useNow'
 import { iconButtonClass, primaryButtonClass } from '../shared/ui'
 import { CATEGORY_PILL_BAR_HEIGHT_PX, CategoryPillBar } from './CategoryPillBar'
 import { PRODUCT_ROW_HEIGHT_PX, ProductCard } from './ProductCard'
@@ -31,6 +34,10 @@ export function MenuPage() {
 
   const { data: groups, isLoading, isError } = useMenu(store.id, orderType, salesChannel)
   const { data: promotions } = usePromotions(store.id)
+  const { data: businessHours } = useBusinessHours(store.id)
+  const now = useNow()
+  const isOpen = businessHours ? isStoreOpenAt(businessHours, now) : true
+  const todayHours = businessHours ? describeHoursForWeekday(businessHours, now.getDay() as 0 | 1 | 2 | 3 | 4 | 5 | 6) : null
 
   const rows = useMemo(() => (groups ? buildRows(groups) : []), [groups])
   const categories = useMemo(() => (groups ? [...groups.keys()] : []), [groups])
@@ -144,6 +151,12 @@ export function MenuPage() {
           <ReceiptText size={20} aria-hidden="true" />
         </button>
       </header>
+
+      {businessHours && !isOpen && (
+        <div className="mx-5 mb-4 rounded-xl border border-caramel/40 bg-tile px-3.5 py-2.5 text-sm text-soft">
+          Loja fechada no momento. {todayHours ? `Hoje funciona das ${todayHours}.` : 'Não abre hoje.'}
+        </div>
+      )}
 
       {salesChannel === 'retail' && groups && promotions && promotions.length > 0 && (
         <div className="px-5 pb-4">
